@@ -1,0 +1,19 @@
+meta {
+  name: deleteCopy
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{vipa}}/api/v1/copies/:copyId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  copyId: 18
+}
+
+settings {
+  encodeUrl: true
+}

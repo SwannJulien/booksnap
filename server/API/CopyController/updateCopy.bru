@@ -1,0 +1,30 @@
+meta {
+  name: updateCopy
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{vipa}}/api/v1/copies/:copyId
+  body: json
+  auth: inherit
+}
+
+params:path {
+  copyId: 18
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "libraryId": null,
+    "status": "removed"
+  }
+}
+
+settings {
+  encodeUrl: true
+}

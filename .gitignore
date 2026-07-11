@@ -1,0 +1,60 @@
+
+# assets
+/assets/icons
+# BlueJ files
+# build
+*.class
+# Compiled class file
+/coverage/
+*.ctxt
+custom-elements.json
+/dist/
+.DS_Store
+*.ear
+## editors
+.env
+hs_err_pid*
+.idea/
+/.idea
+*.iml
+# IntelliJ configuration files
+*.ipr
+*.iws
+*.jar
+# Local Configuration
+*.log
+# Log file
+# Maven Wrapper JARs
+# Miscellaneous
+misc.xml
+# Mobile Tools for Java (J2ME)
+modules.xml
+.mtj.tmp/
+.mvn/wrapper/MavenWrapperDownloader.java
+.mvn/wrapper/maven-wrapper.jar
+*.nar
+/node_modules/
+## npm
+/npm-debug.log
+/out-tsc/
+# Package Files #
+*.rar
+replay_pid*
+.replit
+# Replit config
+Requirements.md
+/_site/
+storybook-static
+## system files
+/target/
+# target folder
+*.tar.gz
+## temp folders
+## testing
+/.tmp/
+# Todo file and requirements
+*.txt
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+/.vscode
+*.war
+*.zip

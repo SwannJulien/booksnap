@@ -1,0 +1,19 @@
+meta {
+  name: deleteBook
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{vipa}}/api/v1/books/:bookId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  bookId: 226
+}
+
+settings {
+  encodeUrl: true
+}

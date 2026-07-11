@@ -1,0 +1,23 @@
+meta {
+  name: getCopy
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{vipa}}/api/v1/copies/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 74
+}
+
+headers {
+  ~Content-Type: application/json
+}
+
+settings {
+  encodeUrl: true
+}

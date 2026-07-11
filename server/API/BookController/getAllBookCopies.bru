@@ -1,0 +1,19 @@
+meta {
+  name: getAllBookCopies
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{vipa}}/api/v1/books/:bookId/copies
+  body: none
+  auth: inherit
+}
+
+params:path {
+  bookId: 220
+}
+
+settings {
+  encodeUrl: true
+}
