@@ -1,0 +1,21 @@
+meta {
+  name: searchForGenres
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{vipa}}/api/v1/genres/search?q&limit
+  body: none
+  auth: inherit
+}
+
+params:query {
+  q: 
+  limit: 
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,22 +1,24 @@
 package net.booksnap.domain.book.api;
 
-import net.booksnap.domain.book.Book;
+import net.booksnap.domain.book.KeyStage;
 import net.booksnap.domain.book.api.dto.BookResponse;
+import net.booksnap.domain.book.api.dto.BookSearchFilter;
 import net.booksnap.domain.book.api.dto.CreateBookRequest;
+import net.booksnap.domain.book.api.dto.CreateBookResponse;
 import net.booksnap.domain.book.service.BookService;
 import net.booksnap.domain.common.dto.ListResponse;
+import net.booksnap.domain.common.dto.PagedResponse;
+import net.booksnap.domain.copy.Status;
 import net.booksnap.domain.copy.api.dto.CopyResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.util.Arrays;
 import java.util.List;
-
 
 @RestController
 @Validated
@@ -31,8 +33,19 @@ public class BookController {
 
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public void addNewBook(@RequestBody @Valid CreateBookRequest request) {
-        bookService.addBook(request);
+    public CreateBookResponse addNewBook(@RequestBody @Valid CreateBookRequest request) {
+        return bookService.addBook(request);
+    }
+
+    @GetMapping("/search")
+    public PagedResponse<BookResponse> searchBooks(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) List<String> genres,
+            @RequestParam(required = false) List<Status> copyStatus,
+            @RequestParam(required = false) KeyStage keyStage,
+            @PageableDefault(size = 10) Pageable pageable) {
+        BookSearchFilter filter = new BookSearchFilter(q, genres, copyStatus, keyStage);
+        return bookService.searchBooks(filter, pageable);
     }
 
     @GetMapping("/{bookId}")
@@ -46,11 +59,11 @@ public class BookController {
     }
 
     @GetMapping
-    public Page<BookResponse> getBooks(
+    public PagedResponse<BookResponse> getBooks(
             @PageableDefault(page = 0, size = 10)
             Pageable pageable) {
 
-        return bookService.findAllBooks(pageable);
+        return PagedResponse.of(bookService.findAllBooks(pageable));
     }
 
     @GetMapping("/{bookId}/copies")
@@ -69,5 +82,12 @@ public class BookController {
     public void updateBook(@PathVariable Long bookId,
                            @RequestBody @Valid CreateBookRequest request) {
         bookService.updateBook(bookId, request);
+    }
+
+    @GetMapping("/key-stages")
+    public List<String> getKeyStages() {
+        return Arrays.stream(KeyStage.values())
+                .map(KeyStage::name)
+                .toList();
     }
 }

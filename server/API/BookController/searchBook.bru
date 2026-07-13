@@ -1,0 +1,23 @@
+meta {
+  name: searchBook
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{vipa}}/api/v1/books/search?q=the&keyStage=KS-2
+  body: none
+  auth: inherit
+}
+
+params:query {
+  q: the
+  keyStage: KS-2
+  ~genres: Fantasy
+  ~copyStatus: on_hold
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -2,11 +2,13 @@ package net.booksnap.domain.copy.api;
 
 import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.Valid;
-import net.booksnap.domain.copy.Copy;
+import net.booksnap.domain.copy.Status;
 import net.booksnap.domain.copy.api.dto.CopyResponse;
 import net.booksnap.domain.copy.api.dto.CreateCopyRequest;
+import net.booksnap.domain.copy.api.dto.CreateCopyResponse;
 import net.booksnap.domain.copy.api.dto.UpdateCopyRequest;
 import net.booksnap.domain.copy.service.CopyService;
+import java.util.Arrays;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -31,8 +33,8 @@ public class CopyController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void createCopy(@RequestBody @Valid CreateCopyRequest createCopyRequest) {
-         copyService.createCopy(createCopyRequest);
+    public CreateCopyResponse createCopy(@RequestBody @Valid CreateCopyRequest createCopyRequest) {
+         return copyService.createCopy(createCopyRequest);
     }
 
     @GetMapping("/{copyId}")
@@ -67,5 +69,12 @@ public class CopyController {
                            @RequestBody @Valid UpdateCopyRequest request) {
 
         copyService.updateCopy(copyId, request);
+    }
+
+    @GetMapping("/statuses")
+    public List<String> getStatuses() {
+        return Arrays.stream(Status.values())
+                .map(Status::name)
+                .toList();
     }
 }

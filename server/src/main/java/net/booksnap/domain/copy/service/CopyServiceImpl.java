@@ -5,6 +5,7 @@ import net.booksnap.domain.book.Book;
 import net.booksnap.domain.book.repository.BookRepository;
 import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.api.dto.CreateCopyRequest;
+import net.booksnap.domain.copy.api.dto.CreateCopyResponse;
 import net.booksnap.domain.copy.api.dto.UpdateCopyRequest;
 import net.booksnap.domain.copy.api.dto.CopyResponse;
 import net.booksnap.domain.copy.mapper.CopyApiMapper;
@@ -43,7 +44,7 @@ public class CopyServiceImpl implements CopyService {
         this.utils = utils;
     }
 
-    public Copy createCopy(CreateCopyRequest createCopyRequest) {
+    public CreateCopyResponse createCopy(CreateCopyRequest createCopyRequest) {
         Book book = bookRepository.findById(createCopyRequest.bookId())
             .orElseThrow(() -> new BookNotFoundException(createCopyRequest.bookId()));
 
@@ -51,15 +52,35 @@ public class CopyServiceImpl implements CopyService {
         copy.setBook(book);
         copy.setLibrary(new Library(createCopyRequest.libraryId(), null));
         copy.setStatus(createCopyRequest.status());
-        copy.setCodeIdentification("TEMP"); // Temporary placeholder to satisfy @NotNull
+        copy.setSectionName(createCopyRequest.sectionName());
+
+        // Generate identification code from section name and first author's surname
+        // Extract author names from the book's authors
+        String identificationCode = createIdentificationCode(book, createCopyRequest.sectionName());
+        copy.setIdentificationCode(identificationCode);
 
         Copy savedCopy = copyRepository.save(copy);
 
-        // Generate QR code identification after saving to get the ID
-        String qrCodeIdentification = qrCodeService.generateCopyIdentificationCode(savedCopy);
-        savedCopy.setCodeIdentification(qrCodeIdentification);
-        
-        return copyRepository.save(savedCopy);
+        // Generate QR code image
+        byte[] qrCode = qrCodeService.generateCopyQRCode(savedCopy);
+
+        return new CreateCopyResponse(
+            qrCode,
+            savedCopy.getIdentificationCode(),
+            savedCopy.getId(),
+            book.getId()
+        );
+    }
+
+    private String createIdentificationCode(Book book, String sectionName) {
+        List<String> authorNames = book.getAuthors().stream()
+            .map(author -> author.getName())
+            .toList();
+        String identificationCode = qrCodeService.generateIdentificationCode(
+                sectionName,
+            authorNames
+        );
+        return identificationCode;
     }
 
     public byte[] generateQRCodeImage(Long copyId) {
@@ -104,7 +125,17 @@ public class CopyServiceImpl implements CopyService {
         if (request.libraryId() != null) {
             existingCopy.setLibrary(new Library(request.libraryId(), null));
         }
-        existingCopy.setStatus(request.status());
+
+        // Update section name and regenerate identification code if section name is provided
+        if (request.sectionName() != null && !request.sectionName().isBlank()) {
+            existingCopy.setSectionName(request.sectionName());
+            String identificationCode = createIdentificationCode(existingCopy.getBook(), request.sectionName());
+            existingCopy.setIdentificationCode(identificationCode);
+        }
+
+        if (request.status() != null) {
+            existingCopy.setStatus(request.status());
+        }
 
         copyRepository.save(existingCopy);
     }

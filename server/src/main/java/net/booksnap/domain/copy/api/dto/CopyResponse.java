@@ -8,7 +8,7 @@ public record CopyResponse (
         Long id,
         LibraryDTO library,
         BookDTO book,
-        String codeIdentification,
+        SectionDTO section,
         String status,
         AuditDTO audit
 ) {}

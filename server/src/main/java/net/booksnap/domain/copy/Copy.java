@@ -10,7 +10,9 @@ import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 @Entity
-@Table(name = "copy")
+@Table(name = "copy", indexes = {
+        @Index(name = "idx_copy_book_status", columnList = "book_id, status")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,9 +27,13 @@ public class Copy extends Auditable {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @Column(name = "code_identification")
+    @Column(name = "section_name")
     @NotNull
-    private String codeIdentification;
+    private String sectionName;
+
+    @Column(name = "identification_code")
+    @NotNull
+    private String identificationCode;
 
     @ManyToOne
     @JoinColumn(name = "library_id", nullable = false)

@@ -5,11 +5,11 @@ import net.booksnap.domain.author.AuthorRepository;
 import net.booksnap.domain.book.Book;
 import net.booksnap.domain.book.api.dto.CreateBookRequest;
 import net.booksnap.domain.book.api.dto.BookResponse;
-import net.booksnap.domain.cover.Cover;
-import net.booksnap.domain.cover.CoverDTO;
+import net.booksnap.domain.copy.Status;
+import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.common.dto.AuditDTO;
 import net.booksnap.domain.dewey.DeweyCategory;
-import net.booksnap.domain.dewey.DeweyCategoryRepository;
+import net.booksnap.domain.dewey.repository.DeweyCategoryRepository;
 import net.booksnap.exception.dewey.DeweyCodeNotFoundException;
 import net.booksnap.domain.genre.Genre;
 import net.booksnap.domain.genre.GenreRepository;
@@ -17,6 +17,7 @@ import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.HashSet;
@@ -35,13 +36,15 @@ public abstract class BookApiMapper {
     @Autowired
     protected AuthorRepository authorRepository;
 
+    @Autowired
+    protected CopyRepository copyRepository;
+
     // Convert API request to Entity
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdDate", ignore = true)
     @Mapping(target = "lastModifiedDate", ignore = true)
     @Mapping(target = "genres", ignore = true)
     @Mapping(target = "authors", ignore = true)
-    @Mapping(target = "covers", ignore = true)
     @Mapping(target = "deweyCategory", ignore = true)
     public abstract Book createRequestToBookEntity(CreateBookRequest request);
 
@@ -65,7 +68,7 @@ public abstract class BookApiMapper {
         if(request.authors() != null && !request.authors().isEmpty()) {
             Set<Author> authorEntities = request.authors().stream()
                     .map(name -> {
-                        String normalized = name.trim().toLowerCase();
+                        String normalized = normalizeToTitleCase(name.trim());
                         return authorRepository.findByName(normalized)
                                 .orElseGet(() -> authorRepository.save(new Author(null, normalized, new HashSet<>())));
                     })
@@ -75,17 +78,35 @@ public abstract class BookApiMapper {
         }
     }
 
-    @AfterMapping
-    public void mapCoversToEntity(@MappingTarget Book book, CreateBookRequest request) {
-        if (request.cover() != null && request.cover().link() != null && request.cover().size() != null) {
-            Set<Cover> covers = new HashSet<>();
-            Cover cover = new Cover();
-            cover.setSize(request.cover().size());
-            cover.setLink(request.cover().link());
-            cover.setBook(book);
-            covers.add(cover);
-            book.setCovers(covers);
+    /**
+     * Normalizes a name to title case (e.g., "john doe" -> "John Doe", "JOHN DOE" -> "John Doe")
+     * Handles multiple words separated by spaces.
+     */
+    private String normalizeToTitleCase(String name) {
+        if (name == null || name.isEmpty()) {
+            return name;
         }
+
+        String[] words = name.split("\\s+");
+        StringBuilder result = new StringBuilder();
+
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            if (word.length() > 0) {
+                // Capitalize first letter, lowercase the rest
+                result.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    result.append(word.substring(1).toLowerCase());
+                }
+
+                // Add space between words (except after the last word)
+                if (i < words.length - 1) {
+                    result.append(" ");
+                }
+            }
+        }
+
+        return result.toString();
     }
 
     @AfterMapping
@@ -104,10 +125,27 @@ public abstract class BookApiMapper {
     // Convert entity response to DTO
     @Mapping(target = "genres", expression = "java(mapGenresToSet(book.getGenres()))")
     @Mapping(target = "authors", expression = "java(mapAuthorsToSet(book.getAuthors()))")
-    @Mapping(target = "cover", expression = "java(mapCoverToDTO(book.getCovers()))")
     @Mapping(target = "audit", expression = "java(mapAuditToDTO(book))")
     @Mapping(target = "codeDewey", expression = "java(mapDeweyCode(book.getDeweyCategory()))")
+    @Mapping(target = "countCopies.totalNumberOfCopies", source = "id", qualifiedByName = "countTotalCopies")
+    @Mapping(target = "countCopies.availableCopies", source = "id", qualifiedByName = "countAvailableCopies")
     public abstract BookResponse bookEntityToBookResponse(Book book);
+
+    @Named("countTotalCopies")
+    protected long countTotalCopies(Long bookId) {
+        if (bookId == null) {
+            return 0;
+        }
+        return copyRepository.countByBookId(bookId);
+    }
+
+    @Named("countAvailableCopies")
+    protected long countAvailableCopies(Long bookId) {
+        if (bookId == null) {
+            return 0;
+        }
+        return copyRepository.countByBookIdAndStatus(bookId, Status.available);
+    }
 
     protected Set<String> mapGenresToSet(Set<Genre> genres) {
         if (genres == null || genres.isEmpty()) {
@@ -128,14 +166,6 @@ public abstract class BookApiMapper {
             return null;
         }
         return deweyCategory.getCode();
-    }
-
-    protected CoverDTO mapCoverToDTO(Set<Cover> covers) {
-        if (covers == null || covers.isEmpty()) {
-            return null;
-        }
-        Cover cover = covers.iterator().next();
-        return new CoverDTO(cover.getSize(), cover.getLink());
     }
 
     protected AuditDTO mapAuditToDTO(Book book) {

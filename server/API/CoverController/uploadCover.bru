@@ -1,0 +1,20 @@
+meta {
+  name: uploadCover
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{vipa}}/api/v1/covers
+  body: file
+  auth: inherit
+}
+
+body:file {
+  file: @file(/Users/swjulien/Desktop/0987654321.jpg) @contentType(image/jpeg)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

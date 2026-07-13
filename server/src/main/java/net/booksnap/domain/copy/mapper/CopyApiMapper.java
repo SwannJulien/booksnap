@@ -4,6 +4,7 @@ import net.booksnap.domain.book.api.dto.BookDTO;
 import net.booksnap.domain.common.dto.AuditDTO;
 import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.api.dto.CopyResponse;
+import net.booksnap.domain.copy.api.dto.SectionDTO;
 import net.booksnap.domain.copy.Status;
 import net.booksnap.domain.copy.api.dto.CreateCopyRequest;
 import net.booksnap.domain.library.api.dto.LibraryDTO;
@@ -15,8 +16,16 @@ public abstract class CopyApiMapper {
 
     @Mapping(target = "library", expression = "java(mapLibrary(copy.getLibrary()))")
     @Mapping(target = "book", expression = "java(mapBook(copy.getBook()))")
+    @Mapping(target = "section", expression = "java(mapSection(copy))")
     @Mapping(target = "audit", expression = "java(mapAuditToDTO(copy))")
     public abstract CopyResponse copyToResponse(Copy copy);
+
+    protected SectionDTO mapSection(Copy copy) {
+        if (copy == null) {
+            return null;
+        }
+        return new SectionDTO(copy.getIdentificationCode(), copy.getSectionName());
+    }
 
     protected LibraryDTO mapLibrary(net.booksnap.domain.library.Library library) {
         if (library == null) {
@@ -45,6 +54,7 @@ public abstract class CopyApiMapper {
     @Mapping(target = "bookId", source = "book.id")
     @Mapping(target = "libraryName", source = "library.name")
     @Mapping(target = "libraryId", source = "library.id")
+    @Mapping(target = "sectionName", source = "sectionName")
     public abstract CreateCopyRequest copyToDTO(Copy copy);
 
     // Convert CreateCopyRequest to Copy entity

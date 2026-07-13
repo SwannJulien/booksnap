@@ -1,0 +1,20 @@
+meta {
+  name: getDivisions
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{vipa}}/api/v1/dewey/classes/:classCode/divisions
+  body: none
+  auth: inherit
+}
+
+params:path {
+  classCode: 100
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

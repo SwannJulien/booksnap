@@ -7,9 +7,10 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import net.booksnap.domain.Auditable;
 import net.booksnap.domain.author.Author;
-import net.booksnap.domain.cover.Cover;
 import net.booksnap.domain.dewey.DeweyCategory;
 import net.booksnap.domain.genre.Genre;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,8 +19,8 @@ import java.util.Set;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(exclude = {"genres", "authors", "covers"}, callSuper = false)
-@ToString(exclude = {"genres", "authors", "covers"})
+@EqualsAndHashCode(exclude = {"genres", "authors"}, callSuper = false)
+@ToString(exclude = {"genres", "authors"})
 public class Book extends Auditable {
 
     @Id
@@ -44,8 +45,10 @@ public class Book extends Auditable {
     @Column(name = "number_of_pages")
     private Short numberOfPages;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "year_recommendation")
-    private Short yearRecommendation;
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    private KeyStage yearRecommendation;
 
     @Column(name = "is_fiction", nullable = false)
     private Boolean isFiction;
@@ -69,8 +72,5 @@ public class Book extends Auditable {
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
     private Set<Author> authors = new HashSet<>();
-
-    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    private Set<Cover> covers = new HashSet<>();
 
 }

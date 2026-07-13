@@ -2,7 +2,8 @@ package net.booksnap.domain.book.api.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import net.booksnap.domain.cover.CoverDTO;
+import net.booksnap.domain.book.KeyStage;
+
 import java.util.Set;
 
 public record CreateBookRequest (
@@ -22,7 +23,7 @@ public record CreateBookRequest (
 
     int numberOfPages,
 
-    String yearRecommendation,
+    KeyStage yearRecommendation,
 
     @NotNull(message = "The book genre fiction/no fiction is required")
     Boolean isFiction,
@@ -33,8 +34,9 @@ public record CreateBookRequest (
 
     Set<String> authors,
 
-    CoverDTO cover,
-
     @NotNull(message = "Library ID is required")
-    Long libraryId
+    Long libraryId,
+
+    @NotNull(message = "Section name is required")
+    String sectionName
 ) {}

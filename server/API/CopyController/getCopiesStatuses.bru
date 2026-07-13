@@ -1,0 +1,15 @@
+meta {
+  name: getCopiesStatuses
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{vipa}}/api/v1/copies/statuses
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

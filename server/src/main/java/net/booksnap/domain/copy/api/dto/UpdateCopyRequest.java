@@ -4,6 +4,6 @@ import net.booksnap.domain.copy.Status;
 
 public record UpdateCopyRequest(
         Long libraryId,
-
+        String sectionName,
         Status status
 ) {}

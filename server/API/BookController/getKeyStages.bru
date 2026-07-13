@@ -1,0 +1,15 @@
+meta {
+  name: getKeyStages
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{vipa}}/api/v1/books/key-stages
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,20 @@
+meta {
+  name: getCover
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{vipa}}/api/v1/covers/:isbn
+  body: none
+  auth: inherit
+}
+
+params:path {
+  isbn: 0099908409
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

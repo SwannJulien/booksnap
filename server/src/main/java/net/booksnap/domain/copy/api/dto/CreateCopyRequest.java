@@ -6,12 +6,11 @@ import net.booksnap.domain.copy.Status;
 
 import java.time.Instant;
 
-@JsonPropertyOrder({"id", "libraryName", "libraryId", "bookTitle", "bookId", "codeIdentification", "status", "createdAt", "updatedAt"})
+@JsonPropertyOrder({"id", "libraryName", "libraryId", "bookTitle", "bookId", "sectionName", "status", "createdAt", "updatedAt"})
 public record CreateCopyRequest (
         Long id,
         String bookTitle,
         String libraryName,
-        String codeIdentification,
         Instant createdAt,
         Instant updatedAt,
 
@@ -21,6 +20,9 @@ public record CreateCopyRequest (
 
         @NotNull(message = "Library ID is required")
         Long libraryId,
+
+        @NotNull(message = "Section name is required")
+        String sectionName,
 
         Status status
 ) {}
