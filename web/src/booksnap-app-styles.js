@@ -1,8 +1,8 @@
 import { css } from 'lit';
-import { resetStyles } from './shared-styles.js';
+import { sharedStyles } from './shared-styles.js';
 
 export const booksnapApp = [
-  resetStyles,
+  sharedStyles,
   css`
     :host {
       min-height: 100vh;
@@ -11,29 +11,27 @@ export const booksnapApp = [
       grid-template-columns: auto 1fr;
       padding-right: 2em;
       gap: 2em;
-      overflow: hidden;
     }
 
     main {
-      overflow: auto;
-      height: 100vh;
       padding-top: 20px;
+      min-height: 100vh;
     }
-    /* FIXME: le scroll de la barre de nav s'arrête et c'est le scroll de la fenêtre qui prend le relais */
+
     #sidebar {
       box-sizing: border-box;
       height: 100%;
       padding-top: 20px;
       width: clamp(12rem, 25vw, 16rem);
       border-right: 1px solid #000000;
-      background-color: var(--clr-dark);
+      background-color: var(--clr-nav-dark);
 
       position: sticky;
       top: 0;
       align-self: start;
       transition: 300ms ease-in-out;
       overflow-x: hidden;
-      overflow-y: auto;
+      overflow-y: hidden;
       text-wrap: nowrap;
     }
 
@@ -74,12 +72,12 @@ export const booksnapApp = [
       margin-bottom: 16px;
     }
 
-    #sidebar ul li:nth-child(7) {
-      margin-top: auto;
-    }
-
-    #sidebar ul li:nth-child(8) {
-      margin-bottom: 2rem;
+    #sidebar ul li.divider {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      padding: 0 1rem;
+      height: 1px;
+      background-color: var(--clr-border, #4a5568);
     }
 
     #sidebar ul li a {
@@ -89,7 +87,7 @@ export const booksnapApp = [
     #sidebar ul li.active a {
       border-inline-start: 4px solid var(--clr-accent);
       color: var(--clr-text-light);
-      background-color: var(--clr-gray);
+      background-color: var(--clr-card-gray);
       border-radius: 0 var(--border-radius-default) var(--border-radius-default)
         0;
 
@@ -115,9 +113,9 @@ export const booksnapApp = [
     }
 
     .logo {
-      font-family: 'Boogaloo', sans-serif;
-      font-weight: 400;
-      font-size: var(--step-3);
+      font-family: var(--font-title), sans-serif;
+      font-weight: 600;
+      font-size: var(--step-2);
       padding-left: 0.425em;
       padding-bottom: 0.3em;
       color: var(--clr-accent);
@@ -137,6 +135,13 @@ export const booksnapApp = [
       border: none;
       background: none;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    #toggle-btn svg {
+      width: 30px;
+      height: 30px;
     }
 
     #toggle-btn svg:hover {
@@ -180,11 +185,12 @@ export const booksnapApp = [
         }
 
         ul li span,
-        ul li:first-child {
+        ul li:first-child,
+        ul li.divider {
           display: none;
         }
 
-        ul li:nth-child(8) {
+        ul li:nth-child(9) {
           margin-bottom: 0;
         }
 
@@ -209,7 +215,9 @@ export const booksnapApp = [
       }
       #sidebar ul li.active a {
         border-left: none;
-        border-bottom: 4px solid var(--clr-text-light);
+        border-bottom: 4px solid var(--clr-accent);
+        border-radius: var(--border-radius-default) var(--border-radius-default)
+          0 0;
       }
     }
   `,

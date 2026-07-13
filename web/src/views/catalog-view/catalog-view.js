@@ -1,13 +1,417 @@
 import { LitElement, html } from 'lit';
+import { Task } from '@lit/task';
 import { catalogView } from './catalog-view-styles.js';
+import { sharedStyles } from '../../shared-styles.js';
+import '../../components/button-bks/button-bks.js';
+import '../../components/search-bar-bks/search-bar-bks.js';
+import '../../features/book/book-form-bks/book-form-bks.js';
+import '../../features/book/book-table-bks/book-table-bks.js';
+import { getBooks, updateBook } from '../../api/book.js';
+import { toFormFormat } from '../../utils/bookMapper.js';
+import { mapBookFormData } from '../../utils/formDataMapper.js';
+import { SearchController } from '../../controllers/search-controller.js';
+import { CoverController } from '../../controllers/cover-controller.js';
+import '../../features/copy/copy-qr-modal-bks/copy-qr-modal-bks.js';
+import '../../features/book/delete-book-modal-bks/delete-book-modal-bks.js';
+import '../../features/copy/copy-section-modal-bks/copy-section-modal-bks.js';
+import '../../features/copy/delete-copy-modal-bks/delete-copy-modal-bks.js';
+import '../../features/book/create-book-bks/create-book-bks.js';
 
 export class CatalogView extends LitElement {
-  static styles = [catalogView];
+  static styles = [catalogView, sharedStyles];
 
-  static properties = {};
+  static properties = {
+    page: { type: Number },
+    size: { type: Number },
+    bookToDelete: { type: Object, state: true },
+    bookToUpdate: { type: Object, state: true },
+    qrCopy: { type: Object, state: true },
+    copyToUpdate: { type: Object, state: true },
+    copyToDelete: { type: Object, state: true },
+    showCreateModal: { type: Boolean, state: true },
+  };
+
+  _search = new SearchController(this, {
+    onResults: results => this._covers.fetchForBooks(results.results),
+  });
+
+  _covers = new CoverController(this);
+
+  constructor() {
+    super();
+    this.page = 1;
+    this.size = 10;
+    this.bookToDelete = null;
+    this.bookToUpdate = null;
+    this.qrCopy = null;
+    this.copyToUpdate = null;
+    this.copyToDelete = null;
+    this.showCreateModal = false;
+  }
+
+  booksTask = new Task(this, {
+    task: async ([page, size]) => {
+      const data = await getBooks(page, size);
+      this._covers.fetchForBooks(data.data);
+      return data;
+    },
+    args: () => [this.page, this.size],
+  });
 
   render() {
-    return html` <h1>Catalog View</h1> `;
+    return html`
+      ${this._headerTpl} ${this._searchbarTpl} ${this._tableTpl}
+      ${this._deleteModalTpl} ${this._updateModalTpl} ${this._createModalTpl}
+      ${this._createBookBksTpl} ${this._qrModalTpl} ${this._updateCopyModalTpl}
+      ${this._deleteCopyModalTpl}
+    `;
+  }
+
+  get _deleteModalTpl() {
+    return html`
+      <delete-book-modal-bks
+        ?open=${!!this.bookToDelete}
+        .book=${this.bookToDelete}
+        @modal-close=${this._handleDeleteModalClose}
+        @book-deleted=${this._handleBookDeleted}
+      ></delete-book-modal-bks>
+    `;
+  }
+
+  get _updateModalTpl() {
+    if (!this.bookToUpdate) return '';
+
+    return html`
+      <div
+        class="update-modal-overlay"
+        role="presentation"
+        @click=${this._handleUpdateModalClose}
+      >
+        <div
+          class="update-modal-content"
+          role="dialog"
+          aria-labelledby="update-modal-title"
+          @keydown=${e => e.stopPropagation()}
+          @click=${e => e.stopPropagation()}
+        >
+          <button
+            class="close-modal-btn"
+            type="button"
+            aria-label="Close"
+            @click=${this._handleUpdateModalClose}
+          >
+            &times;
+          </button>
+          <h2 id="update-modal-title">Update Book</h2>
+          <book-form-bks
+            mode="update"
+            .book=${this.bookToUpdate}
+            @book-submit=${this._handleUpdateSubmit}
+          ></book-form-bks>
+        </div>
+      </div>
+    `;
+  }
+
+  get _headerTpl() {
+    return html`
+      <div class="header">
+        <div class="header-title">
+          <h1>Library Catalog</h1>
+          <p>Manage and browse the entire book collection</p>
+        </div>
+        <button-bks
+          label="Add new Book"
+          icon="add"
+          @click=${this._handleOpenCreateModal}
+        ></button-bks>
+      </div>
+    `;
+  }
+
+  get _searchbarTpl() {
+    return html`
+      <search-bar-bks
+        .query=${this._search.query}
+        @search-input=${this._handleSearchInput}
+        @filters-changed=${this._handleFiltersChanged}
+      ></search-bar-bks>
+    `;
+  }
+
+  get _tableTpl() {
+    // If searching, show search results
+    if (this._search.isActive) {
+      if (this._search.isSearching) {
+        return html`<spinner-bks></spinner-bks>`;
+      }
+      if (this._search.results) {
+        return this._renderBookTable(this._search.results.results, true);
+      }
+      return html`<p>No results found</p>`;
+    }
+
+    // Otherwise, show paginated books
+    return this.booksTask.render({
+      pending: () => html`<spinner-bks></spinner-bks>`,
+      complete: books => this._renderBookTable(books.data, false, books.page),
+      error: err => html`<p>Error loading books: ${err.message}</p>`,
+    });
+  }
+
+  _renderBookTable(books, isSearchMode, pageInfo = null) {
+    return html`
+      <book-table-bks
+        .books=${books}
+        .coverUrls=${this._covers.urls}
+        .isSearchMode=${isSearchMode}
+        .searchQuery=${this._search.query}
+        .searchGenre=${this._search.genres}
+        .searchStatus=${this._search.copyStatus}
+        .searchResultCount=${this._search.results?.count ?? 0}
+        .pageInfo=${{
+          page: pageInfo?.page ?? this.page,
+          size: pageInfo?.size ?? this.size,
+          totalElements: pageInfo?.totalElements ?? 0,
+        }}
+        @dropdown-selected-option=${this._handleDropdownAction}
+        @page-previous=${this._handleClickPrevious}
+        @page-next=${this._handleClickNext}
+      ></book-table-bks>
+    `;
+  }
+
+  _handleDropdownAction(e) {
+    const { action, data } = e.detail;
+
+    switch (action) {
+      case 'update-book':
+        this._handleUpdateBook(data);
+        break;
+      case 'delete-book':
+        this._handleDeleteBook(data);
+        break;
+      case 'print-qr-code':
+        this._handlePrintQrCode(data);
+        break;
+      case 'update-section':
+        this._handleUpdateCopy(data);
+        break;
+      case 'delete-copy':
+        this._handleDeleteCopy(data);
+        break;
+      default:
+        break;
+    }
+  }
+
+  _handleUpdateBook(book) {
+    const isbn = book.isbn13 || book.isbn10;
+    const bookWithCover = {
+      ...book,
+      coverUrl: isbn ? this._covers.get(isbn) : null,
+    };
+
+    this.bookToUpdate = toFormFormat(bookWithCover);
+  }
+
+  _handleUpdateModalClose() {
+    this.bookToUpdate = null;
+  }
+
+  get _createModalTpl() {
+    if (!this.showCreateModal) return '';
+
+    return html`
+      <div
+        class="update-modal-overlay"
+        role="presentation"
+        @click=${this._handleCreateModalClose}
+      >
+        <div
+          class="update-modal-content"
+          role="dialog"
+          aria-labelledby="create-modal-title"
+          @keydown=${e => e.stopPropagation()}
+          @click=${e => e.stopPropagation()}
+        >
+          <button
+            class="close-modal-btn"
+            type="button"
+            aria-label="Close"
+            @click=${this._handleCreateModalClose}
+          >
+            &times;
+          </button>
+          <h2 id="create-modal-title">Add New Book</h2>
+          <book-form-bks
+            mode="create"
+            @book-submit=${this._handleCreateSubmit}
+          ></book-form-bks>
+        </div>
+      </div>
+    `;
+  }
+
+  get _createBookBksTpl() {
+    return html`
+      <create-book-bks
+        @book-created=${this._handleBookCreated}
+        @modal-close=${this._handleCreateBookModalClose}
+      ></create-book-bks>
+    `;
+  }
+
+  _handleOpenCreateModal() {
+    this.showCreateModal = true;
+  }
+
+  _handleCreateModalClose() {
+    this.showCreateModal = false;
+  }
+
+  async _handleCreateSubmit(e) {
+    const { bookData, cover } = e.detail;
+    await this.shadowRoot
+      .querySelector('create-book-bks')
+      .submitBook(bookData, cover);
+  }
+
+  _handleBookCreated() {
+    this._refreshList();
+  }
+
+  _handleCreateBookModalClose() {
+    this.showCreateModal = false;
+  }
+
+  async _handleUpdateSubmit(e) {
+    const { bookData } = e.detail;
+    const mappedData = mapBookFormData(bookData);
+    // TODO: remove hardcoded libraryId
+    mappedData.libraryId = 1;
+
+    try {
+      await updateBook(mappedData.id, mappedData);
+      this.bookToUpdate = null;
+      this._refreshList();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to update book:', err);
+    }
+  }
+
+  _handleDeleteBook(book) {
+    this.bookToDelete = book;
+  }
+
+  _handleDeleteModalClose() {
+    this.bookToDelete = null;
+  }
+
+  _handleBookDeleted() {
+    this.bookToDelete = null;
+    this._refreshList();
+  }
+
+  _handleClickPrevious() {
+    if (this.page > 1) {
+      this.page -= 1;
+    }
+  }
+
+  _handleClickNext() {
+    this.page += 1;
+  }
+
+  _handleSearchInput(e) {
+    this._search.updateQuery(e.detail.value);
+  }
+
+  _handleFiltersChanged(e) {
+    this._search.updateFilters(e.detail);
+  }
+
+  get _qrModalTpl() {
+    return html`
+      <copy-qr-modal-bks
+        ?open=${!!this.qrCopy}
+        .copy=${this.qrCopy}
+        @modal-close=${this._handleQrModalClose}
+      ></copy-qr-modal-bks>
+    `;
+  }
+
+  _handlePrintQrCode(copy) {
+    this.qrCopy = copy;
+  }
+
+  _handleQrModalClose() {
+    this.qrCopy = null;
+  }
+
+  get _updateCopyModalTpl() {
+    return html`
+      <copy-section-modal-bks
+        ?open=${!!this.copyToUpdate}
+        .copy=${this.copyToUpdate}
+        @modal-close=${this._handleUpdateCopyModalClose}
+        @section-updated=${this._handleSectionUpdated}
+      ></copy-section-modal-bks>
+    `;
+  }
+
+  _handleUpdateCopy(copy) {
+    this.copyToUpdate = copy;
+  }
+
+  _handleUpdateCopyModalClose() {
+    this.copyToUpdate = null;
+  }
+
+  _handleSectionUpdated(e) {
+    const { bookId } = e.detail;
+    this.copyToUpdate = null;
+
+    if (bookId) {
+      this.shadowRoot.querySelector('book-table-bks')?.refreshCopies(bookId);
+    }
+  }
+
+  get _deleteCopyModalTpl() {
+    return html`
+      <delete-copy-modal-bks
+        ?open=${!!this.copyToDelete}
+        .copy=${this.copyToDelete}
+        @modal-close=${this._handleDeleteCopyModalClose}
+        @copy-deleted=${this._handleCopyDeleted}
+      ></delete-copy-modal-bks>
+    `;
+  }
+
+  _handleDeleteCopy(copy) {
+    this.copyToDelete = copy;
+  }
+
+  _handleDeleteCopyModalClose() {
+    this.copyToDelete = null;
+  }
+
+  _handleCopyDeleted(e) {
+    const { bookId } = e.detail;
+    this.copyToDelete = null;
+
+    if (bookId) {
+      this.shadowRoot.querySelector('book-table-bks')?.refreshCopies(bookId);
+    }
+  }
+
+  _refreshList() {
+    if (this._search.isActive) {
+      this._search.performSearch();
+    } else {
+      this.booksTask.run();
+    }
   }
 }
 

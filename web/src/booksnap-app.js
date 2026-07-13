@@ -2,10 +2,9 @@ import { Router } from '@vaadin/router';
 import { LitElement, html } from 'lit';
 
 import { booksnapApp } from './booksnap-app-styles.js';
-import './components/barecode-scanner/barecode-scanner.js';
-import './views/save-book/save-book.js';
+import './features/scanner/barcode-scanner-bks/barcode-scanner-bks.js';
 import './views/home-view/home-view.js';
-import './views/search-book/search-book.js';
+import './views/add-book-view/add-book-view.js';
 
 class BooksnapApp extends LitElement {
   static styles = [booksnapApp];
@@ -34,30 +33,30 @@ class BooksnapApp extends LitElement {
         },
       },
       {
-        path: '/search',
-        component: 'search-book',
+        path: '/add',
+        component: 'add-book-view',
         action: async () => {
-          await import('./views/home-view/home-view.js');
+          await import('./views/add-book-view/add-book-view.js');
           listItems.forEach(item => {
             item.classList.remove('active');
           });
           linkItems.forEach(element => {
-            if (element.getAttribute('href') === '/search') {
+            if (element.getAttribute('href') === '/add') {
               element.parentElement.classList.add('active');
             }
           });
         },
       },
       {
-        path: '/book',
-        component: 'save-book',
+        path: '/scan',
+        component: 'scan-book-view',
         action: async () => {
-          await import('./views/save-book/save-book.js');
+          await import('./views/scan-book-view/scan-book-view.js');
           listItems.forEach(item => {
             item.classList.remove('active');
           });
           linkItems.forEach(element => {
-            if (element.getAttribute('href') === '/book') {
+            if (element.getAttribute('href') === '/scan') {
               element.parentElement.classList.add('active');
             }
           });
@@ -213,7 +212,20 @@ class BooksnapApp extends LitElement {
             </a>
           </li>
           <li>
-            <a href="/search" @click=${this.toggleActive}>
+            <a href="/add" @click=${this.toggleActive}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 -960 960 960"
+              >
+                <path
+                  d="M440-120v-320H120v-80h320v-320h80v320h320v80H520v320h-80Z"
+                />
+              </svg>
+              <span>Add Book</span>
+            </a>
+          </li>
+          <li>
+            <a href="/scan" @click=${this.toggleActive}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 -960 960 960"
@@ -251,8 +263,9 @@ class BooksnapApp extends LitElement {
               <span>Analytics</span>
             </a>
           </li>
-            <li>
-              <a href="/settings" @click=${this.toggleActive}>
+          <li class="divider"></li>
+          <li>
+            <a href="/settings" @click=${this.toggleActive}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 -960 960 960"

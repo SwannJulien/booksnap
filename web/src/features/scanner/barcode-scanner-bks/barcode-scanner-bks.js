@@ -1,10 +1,11 @@
 import { BrowserMultiFormatReader } from '@zxing/browser';
+import { BarcodeFormat } from '@zxing/library';
 import { LitElement, html } from 'lit';
-import { barecodeScanner } from './barecode-scanner-styles.js';
-import '../button-bks/button-bks.js';
+import { barcodeScannerBksStyles } from './barcode-scanner-bks-styles.js';
+import '../../../components/button-bks/button-bks.js';
 
-export class BarecodeScanner extends LitElement {
-  static styles = [barecodeScanner];
+export class BarcodeScannerBks extends LitElement {
+  static styles = [barcodeScannerBksStyles];
 
   static properties = {
     result: { type: String },
@@ -54,11 +55,15 @@ export class BarecodeScanner extends LitElement {
         (result, err, control) => {
           if (result) {
             this.result = result.getText();
+            const type =
+              result.getBarcodeFormat() === BarcodeFormat.QR_CODE
+                ? 'QR_CODE'
+                : 'BARCODE';
             this.dispatchEvent(
               new CustomEvent('sendBarecode', {
                 bubbles: true,
                 composed: true,
-                detail: { code: this.result },
+                detail: { code: this.result, type },
               }),
             );
             control.stop();
@@ -103,4 +108,4 @@ export class BarecodeScanner extends LitElement {
   }
 }
 
-customElements.define('barecode-scanner', BarecodeScanner);
+customElements.define('barcode-scanner-bks', BarcodeScannerBks);

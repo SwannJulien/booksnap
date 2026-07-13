@@ -1,23 +1,26 @@
 import { LitElement, html } from 'lit';
-import { buttonBks } from './button-bks.css.js';
+import { buttonBksStyles } from './button-bks-styles.js';
 
 export class ButtonBks extends LitElement {
+  static styles = [buttonBksStyles];
+
   static formAssociated = true;
 
   static properties = {
     label: { type: String },
     disabled: { type: Boolean },
     type: { type: String },
+    icon: { type: String },
   };
-
-  static styles = [buttonBks];
 
   constructor() {
     super();
     this.label = 'Button';
-    this.disabled = false;
+    /** @type {'button' | 'submit' | 'reset'} */
     this.type = 'button';
+    this.disabled = false;
     this.internals = this.attachInternals();
+    this.icon = '';
   }
 
   render() {
@@ -27,9 +30,27 @@ export class ButtonBks extends LitElement {
         ?disabled=${this.disabled}
         @click=${this._handleClick}
       >
-        ${this.label}
+        <span class=${this.icon ? 'text-align' : ''}>
+          ${this._handleIcon()} ${this.label}
+        </span>
       </button>
     `;
+  }
+
+  _handleIcon() {
+    const icons = {
+      add: html`<svg
+        xmlns="http://www.w3.org/2000/svg"
+        height="24px"
+        viewBox="0 -960 960 960"
+        width="24px"
+        fill="#111827"
+      >
+        <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+      </svg>`,
+    };
+
+    return icons[this.icon] || null;
   }
 
   _handleClick(e) {

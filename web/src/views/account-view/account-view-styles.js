@@ -1,4 +1,4 @@
 import { css } from 'lit';
-import { resetStyles } from '../../shared-styles.js';
+import { sharedStyles } from '../../shared-styles.js';
 
-export const accountView = [resetStyles, css``];
+export const accountView = [sharedStyles, css``];
