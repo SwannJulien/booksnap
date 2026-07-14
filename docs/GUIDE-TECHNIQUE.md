@@ -474,6 +474,8 @@ server {
 
 ### Commandes Docker
 
+> **Persistance des données** : Par défaut, les données de PostgreSQL sont sauvegardées dans un volume Docker. Elles persistent même après `docker compose down`. Utilisez le flag `-v` pour supprimer le volume et réinitialiser la base de données.
+
 ```bash
 # === DÉMARRAGE ===
 
