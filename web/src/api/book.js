@@ -2,7 +2,7 @@ import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 
 export async function postBook(payload) {
   try {
-    const response = await fetch(`${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}`, {
+    const response = await fetch(`${API_BASE_URL}${API_ROUTES.BOOKS}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,7 +20,7 @@ export async function postBook(payload) {
 export async function getBooks(page = 1, size = 10) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}?page=${page}&size=${size}`,
+      `${API_BASE_URL}${API_ROUTES.BOOKS}?page=${page}&size=${size}`,
     );
 
     if (!response.ok) {
@@ -45,7 +45,7 @@ export async function searchBooks(
     params.set('limit', limit);
 
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}/search?${params}`,
+      `${API_BASE_URL}${API_ROUTES.BOOKS}/search?${params}`,
     );
 
     if (!response.ok) {
@@ -61,7 +61,7 @@ export async function searchBooks(
 export async function deleteBook(bookId) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}/${bookId}`,
+      `${API_BASE_URL}${API_ROUTES.BOOKS}/${bookId}`,
       {
         method: 'DELETE',
       },
@@ -77,7 +77,7 @@ export async function deleteBook(bookId) {
 export async function updateBook(bookId, payload) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}/${bookId}`,
+      `${API_BASE_URL}${API_ROUTES.BOOKS}/${bookId}`,
       {
         method: 'PUT',
         headers: {

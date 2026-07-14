@@ -3,7 +3,7 @@ import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 export async function getCopyStatuses() {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.COPIES}/statuses`,
+      `${API_BASE_URL}${API_ROUTES.COPIES}/statuses`,
     );
 
     if (!response.ok) {
@@ -19,7 +19,7 @@ export async function getCopyStatuses() {
 export async function getBookCopies(bookId) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.BOOKS}/${bookId}/copies`,
+      `${API_BASE_URL}${API_ROUTES.BOOKS}/${bookId}/copies`,
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -32,7 +32,7 @@ export async function getBookCopies(bookId) {
 }
 
 export async function createCopy(payload) {
-  const response = await fetch(`${API_BASE_URL.LOCAL}${API_ROUTES.COPIES}`, {
+  const response = await fetch(`${API_BASE_URL}${API_ROUTES.COPIES}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export async function createCopy(payload) {
 
 export async function updateCopy(copyId, payload) {
   const response = await fetch(
-    `${API_BASE_URL.LOCAL}${API_ROUTES.COPIES}/${copyId}`,
+    `${API_BASE_URL}${API_ROUTES.COPIES}/${copyId}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -68,7 +68,7 @@ export async function updateCopy(copyId, payload) {
 export async function deleteCopy(copyId) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.COPIES}/${copyId}`,
+      `${API_BASE_URL}${API_ROUTES.COPIES}/${copyId}`,
       {
         method: 'DELETE',
       },
@@ -83,7 +83,7 @@ export async function deleteCopy(copyId) {
 
 export async function getCopyQrCode(copyId) {
   const response = await fetch(
-    `${API_BASE_URL.LOCAL}${API_ROUTES.COPIES}/${copyId}/qrcode`,
+    `${API_BASE_URL}${API_ROUTES.COPIES}/${copyId}/qrcode`,
   );
 
   if (!response.ok) {

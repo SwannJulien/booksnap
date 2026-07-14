@@ -3,7 +3,7 @@ import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 export async function getDeweyClasses() {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.DEWEY}/classes`,
+      `${API_BASE_URL}${API_ROUTES.DEWEY}/classes`,
     );
 
     if (!response.ok) {
@@ -19,7 +19,7 @@ export async function getDeweyClasses() {
 export async function getDeweyDivisions(classCode) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.DEWEY}/classes/${classCode}/divisions`,
+      `${API_BASE_URL}${API_ROUTES.DEWEY}/classes/${classCode}/divisions`,
     );
 
     if (!response.ok) {
@@ -35,7 +35,7 @@ export async function getDeweyDivisions(classCode) {
 export async function getDeweyCategories(divisionCode) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.DEWEY}/divisions/${divisionCode}/categories`,
+      `${API_BASE_URL}${API_ROUTES.DEWEY}/divisions/${divisionCode}/categories`,
     );
 
     if (!response.ok) {

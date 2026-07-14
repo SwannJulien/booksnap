@@ -3,7 +3,7 @@ import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 export async function getCover(isbn) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.COVERS}/${encodeURIComponent(isbn)}`,
+      `${API_BASE_URL}${API_ROUTES.COVERS}/${encodeURIComponent(isbn)}`,
       {
         method: 'GET',
       },
@@ -46,7 +46,7 @@ export async function uploadCover(coverSource, isbn) {
 
     // Upload the binary image to the backend with ISBN as query parameter
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.COVERS}?isbn=${encodeURIComponent(isbn)}`,
+      `${API_BASE_URL}${API_ROUTES.COVERS}?isbn=${encodeURIComponent(isbn)}`,
       {
         method: 'POST',
         headers: {

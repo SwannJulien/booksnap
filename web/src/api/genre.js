@@ -3,7 +3,7 @@ import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 export async function searchGenres(query) {
   try {
     const response = await fetch(
-      `${API_BASE_URL.LOCAL}${API_ROUTES.GENRES}/search?q=${encodeURIComponent(query)}`,
+      `${API_BASE_URL}${API_ROUTES.GENRES}/search?q=${encodeURIComponent(query)}`,
     );
 
     if (!response.ok) {
