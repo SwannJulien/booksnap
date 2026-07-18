@@ -11,6 +11,7 @@ export class BarcodeScannerBks extends LitElement {
     result: { type: String },
     hideVideo: { type: Boolean },
     isScanning: { type: Boolean },
+    autoStart: { type: Boolean },
   };
 
   constructor() {
@@ -20,6 +21,13 @@ export class BarcodeScannerBks extends LitElement {
     this.hideVideo = true;
     this.isScanning = false;
     this.videoStream = null;
+    this.autoStart = false;
+  }
+
+  firstUpdated() {
+    if (this.autoStart) {
+      this.startScanner();
+    }
   }
 
   async toggleScanner() {
@@ -99,11 +107,13 @@ export class BarcodeScannerBks extends LitElement {
   render() {
     return html`
       <video id="video" autoplay muted ?hidden=${this.hideVideo}></video>
-      <button-bks
-        label=${this.isScanning ? 'Stop Scanning' : 'Start Scanning'}
-        @click=${this.toggleScanner}
-      >
-      </button-bks>
+      ${this.autoStart
+        ? ''
+        : html`<button-bks
+            label=${this.isScanning ? 'Stop Scanning' : 'Start Scanning'}
+            @click=${this.toggleScanner}
+          >
+          </button-bks>`}
     `;
   }
 }
