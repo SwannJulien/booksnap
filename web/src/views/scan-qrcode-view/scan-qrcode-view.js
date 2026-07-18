@@ -1,12 +1,12 @@
 import { LitElement, html } from 'lit';
-import { scanBookView } from './scan-book-view-styles.js';
+import { scanQrcodeView } from './scan-qrcode-view-styles.js';
 import { sharedStyles } from '../../shared-styles.js';
 import '../../features/scanner/barcode-scanner-bks/barcode-scanner-bks.js';
 import '../../features/scanner/qr-code-reader-bks/qr-code-reader-bks.js';
 import '../../features/scanner/barecode-reader-bks/barecode-reader-bks.js';
 
-export class ScanBookView extends LitElement {
-  static styles = [sharedStyles, scanBookView];
+export class ScanQrcodeView extends LitElement {
+  static styles = [sharedStyles, scanQrcodeView];
 
   static properties = {
     _detectedType: { type: String, state: true },
@@ -35,6 +35,8 @@ export class ScanBookView extends LitElement {
     }
 
     if (this._detectedType === 'BARCODE') {
+      console.log(this._scannedCode);
+      
       return html`<barecode-reader-bks
         isbn=${this._scannedCode}
         @scan-done=${this._resetScan}
@@ -56,4 +58,4 @@ export class ScanBookView extends LitElement {
   }
 }
 
-customElements.define('scan-book-view', ScanBookView);
+customElements.define('scan-qrcode-view', ScanQrcodeView);

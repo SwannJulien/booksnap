@@ -1,7 +1,7 @@
 import { css } from 'lit';
 import { sharedStyles } from '../../shared-styles.js';
 
-export const scanBookView = [
+export const scanQrcodeView = [
   sharedStyles,
   css`
     :host {

@@ -17,21 +17,21 @@
   },
   "dependencies": {
     "@lit/task": "^1.0.3",
-    "@vaadin/router": "^2.0.0",
-    "@zxing/browser": "^0.1.5",
-    "lit": "^3.1.4"
+    "@vaadin/router": "^2.0.1",
+    "@zxing/browser": "^0.2.1",
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@custom-elements-manifest/analyzer": "^0.10.3",
+    "@custom-elements-manifest/analyzer": "^0.10.10",
     "@open-wc/eslint-config": "^12.0.3",
     "@web/dev-server": "^0.4.6",
     "esbuild": "^0.28.1",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^9.1.0",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.7",
-    "prettier": "^3.3.2",
-    "vite": "^8.1.4"
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.9.5",
+    "vite": "^8.1.5"
   },
   "eslintConfig": {
     "extends": [
