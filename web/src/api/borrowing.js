@@ -20,6 +20,32 @@ export async function getBorrowingByCopyId(copyId) {
   return response.json();
 }
 
+// Lists borrowings active at the present date (status borrowed or overdue).
+// status narrows the list: 'borrowed' (on-time) or 'overdue' (late).
+export async function getBorrowings({
+  page = 1,
+  size = 10,
+  q = '',
+  status = '',
+} = {}) {
+  const params = new URLSearchParams({ page, size });
+  if (q) params.set('q', q);
+  if (status) params.set('status', status);
+
+  const response = await fetch(
+    `${API_BASE_URL}${API_ROUTES.BORROWINGS}?${params}`,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Failed to fetch borrowings: ${response.status}`,
+    );
+  }
+
+  return response.json();
+}
+
 export async function createBorrowing(copyId, userId) {
   const response = await fetch(`${API_BASE_URL}${API_ROUTES.BORROWINGS}`, {
     method: 'POST',
