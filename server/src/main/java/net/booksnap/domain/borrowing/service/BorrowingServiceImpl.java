@@ -5,16 +5,19 @@ import net.booksnap.domain.borrowing.Borrowing;
 import net.booksnap.domain.borrowing.Status;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingRequest;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingResponse;
+import net.booksnap.domain.borrowing.api.dto.GetBorrowingResponse;
 import net.booksnap.domain.borrowing.repository.BorrowingRepository;
 import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.user.User;
 import net.booksnap.domain.user.repository.UserRepository;
+import net.booksnap.exception.borrowing.BorrowingNotFoundException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -59,6 +62,24 @@ public class BorrowingServiceImpl implements BorrowingService {
                 savedBorrowing.getStatus(),
                 savedBorrowing.getStartDate(),
                 savedBorrowing.getEndDate()
+        );
+    }
+
+    public GetBorrowingResponse getActiveBorrowingByCopyId(Long copyId) {
+        Copy copy = copyRepository.findById(copyId)
+                .orElseThrow(() -> new CopyNotFoundException(copyId));
+
+        Borrowing borrowing = borrowingRepository
+                .findFirstByCopyIdAndStatusIn(copy.getId(), List.of(Status.borrowed, Status.overdue))
+                .orElseThrow(() -> new BorrowingNotFoundException(copyId));
+
+        return new GetBorrowingResponse(
+                borrowing.getId(),
+                borrowing.getCopy().getId(),
+                borrowing.getUser().getId(),
+                borrowing.getStatus(),
+                borrowing.getStartDate(),
+                borrowing.getEndDate()
         );
     }
 }
