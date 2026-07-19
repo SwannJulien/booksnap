@@ -7,6 +7,7 @@ import net.booksnap.exception.common.BadRequestException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.dewey.DeweyCodeNotFoundException;
 import net.booksnap.exception.dewey.FictionBookHasDeweyCodeException;
+import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -100,6 +101,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CopyNotFoundException.class)
     public ResponseEntity<ApiError> handleCopyNotFound(CopyNotFoundException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiError> handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
         ApiError error = new ApiError(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
