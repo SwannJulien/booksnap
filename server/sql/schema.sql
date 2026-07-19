@@ -126,11 +126,18 @@ CREATE TABLE borrowing (
 	status borrowing_status NOT NULL DEFAULT 'borrowed',
 	start_date DATE NOT NULL CHECK (start_date <= end_date),
 	end_date DATE NOT NULL,
+	-- Copy status at borrow time (set by trigger), so a damaged copy goes back to 'damaged' on return
+	pre_borrow_copy_status copy_status,
 	created_by TEXT,
     created_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_modified_by TEXT,
     last_modified_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- A copy can have at most one active (borrowed or overdue) borrowing at a time
+CREATE UNIQUE INDEX uq_borrowing_one_active_per_copy
+    ON borrowing (copy_id)
+    WHERE status IN ('borrowed', 'overdue');
 
 CREATE TYPE hold_status AS ENUM ('pending', 'active', 'expired', 'fulfilled');
 
@@ -165,7 +172,22 @@ CREATE TABLE notification (
 -- Triggers to keep copy.status in sync with borrowing and hold
 -- ============================================================
 
--- 1. When a borrowing is created, mark the copy as borrowed
+-- 1a. Before a borrowing is created, remember the copy's current status
+--     so it can be restored on return (e.g. a damaged copy stays damaged)
+CREATE OR REPLACE FUNCTION fn_capture_copy_status_on_borrowing_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+    SELECT status INTO NEW.pre_borrow_copy_status FROM copy WHERE id = NEW.copy_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_borrowing_before_insert
+BEFORE INSERT ON borrowing
+FOR EACH ROW
+EXECUTE FUNCTION fn_capture_copy_status_on_borrowing_insert();
+
+-- 1b. When a borrowing is created, mark the copy as borrowed
 CREATE OR REPLACE FUNCTION fn_sync_copy_on_borrowing_insert()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -179,13 +201,15 @@ AFTER INSERT ON borrowing
 FOR EACH ROW
 EXECUTE FUNCTION fn_sync_copy_on_borrowing_insert();
 
--- 2. When a borrowing is returned, mark the copy as available
---    unless an active hold exists, in which case mark it as on_hold
+-- 2. When a borrowing is returned, restore the copy: a damaged copy stays
+--    damaged, otherwise on_hold if an active hold exists, otherwise available
 CREATE OR REPLACE FUNCTION fn_sync_copy_on_borrowing_update()
 RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.status = 'returned' AND OLD.status != 'returned' THEN
-        IF EXISTS (SELECT 1 FROM hold WHERE copy_id = NEW.copy_id AND status = 'active') THEN
+        IF NEW.pre_borrow_copy_status = 'damaged' THEN
+            UPDATE copy SET status = 'damaged' WHERE id = NEW.copy_id;
+        ELSIF EXISTS (SELECT 1 FROM hold WHERE copy_id = NEW.copy_id AND status = 'active') THEN
             UPDATE copy SET status = 'on_hold' WHERE id = NEW.copy_id;
         ELSE
             UPDATE copy SET status = 'available' WHERE id = NEW.copy_id;

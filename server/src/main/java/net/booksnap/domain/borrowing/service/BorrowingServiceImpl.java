@@ -11,6 +11,7 @@ import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.user.User;
 import net.booksnap.domain.user.repository.UserRepository;
+import net.booksnap.exception.copy.CopyNotAvailableException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,10 @@ public class BorrowingServiceImpl implements BorrowingService {
     public CreateBorrowingResponse createBorrowing(CreateBorrowingRequest createBorrowingRequest) {
         Copy copy = copyRepository.findById(createBorrowingRequest.copyId())
                 .orElseThrow(() -> new CopyNotFoundException(createBorrowingRequest.copyId()));
+
+        if (!copy.getStatus().isBorrowable()) {
+            throw new CopyNotAvailableException(copy.getId(), copy.getStatus());
+        }
 
         User user = userRepository.findById(createBorrowingRequest.userId())
                 .orElseThrow(() -> new UserNotFoundException(createBorrowingRequest.userId()));

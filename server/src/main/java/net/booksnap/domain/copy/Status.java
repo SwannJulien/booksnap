@@ -6,5 +6,9 @@ public enum Status {
     on_hold,
     lost,
     damaged,
-    removed
+    removed;
+
+    public boolean isBorrowable() {
+        return this == available || this == damaged;
+    }
 }
