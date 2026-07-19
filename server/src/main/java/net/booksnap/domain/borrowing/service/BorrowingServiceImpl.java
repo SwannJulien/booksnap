@@ -85,6 +85,6 @@ public class BorrowingServiceImpl implements BorrowingService {
                 ))
                 .orElse(null);
 
-        return new GetBorrowingResponse(copy.getStatus(), borrowingDetails);
+        return new GetBorrowingResponse(copy.getStatus(), copy.getBook().getTitle(), borrowingDetails);
     }
 }

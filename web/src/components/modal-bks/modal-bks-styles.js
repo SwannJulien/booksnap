@@ -30,8 +30,8 @@ export const modalBksStyles = css`
     max-width: 90vw;
     max-height: 90vh;
     border-radius: var(--border-radius-default);
-    background-color: var(--clr-text-light);
-    color: var(--clr-main-dark);
+    background-color: var(--clr-card-gray);
+    color: var(--clr-text-light);
   }
 
   .close-btn {

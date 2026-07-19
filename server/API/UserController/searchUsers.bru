@@ -1,17 +1,18 @@
 meta {
-  name: getAllBookCopies
+  name: searchUsers
   type: http
-  seq: 4
+  seq: 1
 }
 
 get {
-  url: {{vipa}}/api/v1/books/:bookId/copies
+  url: {{vipa}}/api/v1/users/search?q&limit
   body: none
   auth: inherit
 }
 
-params:path {
-  bookId: 1
+params:query {
+  q:
+  limit:
 }
 
 settings {
