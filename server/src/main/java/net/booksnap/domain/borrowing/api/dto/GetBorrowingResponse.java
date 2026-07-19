@@ -5,10 +5,15 @@ import net.booksnap.domain.borrowing.Status;
 import java.time.LocalDate;
 
 public record GetBorrowingResponse(
-        Long id,
-        Long copyId,
-        Long userId,
-        Status status,
-        LocalDate startDate,
-        LocalDate endDate
-) {}
+        net.booksnap.domain.copy.Status copyStatus,
+        BorrowingDetails borrowing
+) {
+    public record BorrowingDetails(
+            Long id,
+            Long copyId,
+            Long userId,
+            Status status,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {}
+}

@@ -11,7 +11,6 @@ import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.user.User;
 import net.booksnap.domain.user.repository.UserRepository;
-import net.booksnap.exception.borrowing.BorrowingNotFoundException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.stereotype.Service;
@@ -69,17 +68,18 @@ public class BorrowingServiceImpl implements BorrowingService {
         Copy copy = copyRepository.findById(copyId)
                 .orElseThrow(() -> new CopyNotFoundException(copyId));
 
-        Borrowing borrowing = borrowingRepository
+        GetBorrowingResponse.BorrowingDetails borrowingDetails = borrowingRepository
                 .findFirstByCopyIdAndStatusIn(copy.getId(), List.of(Status.borrowed, Status.overdue))
-                .orElseThrow(() -> new BorrowingNotFoundException(copyId));
+                .map(borrowing -> new GetBorrowingResponse.BorrowingDetails(
+                        borrowing.getId(),
+                        borrowing.getCopy().getId(),
+                        borrowing.getUser().getId(),
+                        borrowing.getStatus(),
+                        borrowing.getStartDate(),
+                        borrowing.getEndDate()
+                ))
+                .orElse(null);
 
-        return new GetBorrowingResponse(
-                borrowing.getId(),
-                borrowing.getCopy().getId(),
-                borrowing.getUser().getId(),
-                borrowing.getStatus(),
-                borrowing.getStartDate(),
-                borrowing.getEndDate()
-        );
+        return new GetBorrowingResponse(copy.getStatus(), borrowingDetails);
     }
 }

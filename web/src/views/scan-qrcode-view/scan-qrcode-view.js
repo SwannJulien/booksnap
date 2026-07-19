@@ -40,11 +40,15 @@ export class ScanQrcodeView extends LitElement {
 
   async _checkBorrowing(copyId) {
     try {
-      const borrowing = await getBorrowingByCopyId(copyId);
-      if (borrowing) {
-        console.log(`Copy ${copyId} is borrowed`, borrowing);
+      const result = await getBorrowingByCopyId(copyId);
+      if (!result) {
+        console.log(`Copy ${copyId} not found`);
+        return;
+      }
+      if (result.borrowing) {
+        console.log(`Copy ${copyId} is borrowed (status: ${result.copyStatus})`, result.borrowing);
       } else {
-        console.log(`Copy ${copyId} is not borrowed`);
+        console.log(`Copy ${copyId} is not borrowed (status: ${result.copyStatus})`);
       }
     } catch (error) {
       console.error(`Failed to check borrowing for copy ${copyId}:`, error);

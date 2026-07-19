@@ -1,5 +1,6 @@
 import { API_BASE_URL, API_ROUTES } from './api-routes.js';
 
+// Returns { copyStatus, borrowing | null }, or null when the copy id is unknown.
 export async function getBorrowingByCopyId(copyId) {
   const response = await fetch(
     `${API_BASE_URL}${API_ROUTES.BORROWINGS}/${copyId}`,
