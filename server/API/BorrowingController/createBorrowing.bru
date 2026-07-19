@@ -1,0 +1,27 @@
+meta {
+  name: createBorrowing
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{vipa}}/api/v1/borrowings
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "userId": 1,
+    "copyId": 1
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

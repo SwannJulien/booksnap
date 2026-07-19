@@ -6,33 +6,53 @@
 
 ## Table des Matières
 
-1. [Démarrage Rapide](#1-démarrage-rapide)
-   - [Prérequis](#prérequis)
-   - [Lancer l'application (Production)](#lancer-lapplication-production)
-   - [URLs des services](#urls-des-services)
-
-2. [Développement Local](#2-développement-local)
-   - [Dois-je utiliser Docker ?](#dois-je-utiliser-docker-en-développement-)
-   - [Workflow recommandé (Hybride)](#workflow-recommandé--hybride)
-   - [Option 1 : DB Docker + Code Local](#option-1--db-docker--code-local-recommandé)
-   - [Option 2 : Tout en Docker](#option-2--tout-en-docker-simulation-production)
-   - [Configuration IDE](#configuration-ide)
-
-3. [Architecture Docker](#3-architecture-docker)
-   - [Structure des fichiers](#structure-des-fichiers)
-   - [Relation entre les fichiers](#relation-entre-les-fichiers)
-   - [Flux de construction](#flux-de-construction)
-   - [Orchestration (docker-compose)](#orchestration-docker-compose)
-   - [Communication entre services](#communication-entre-services)
-
-4. [Choix Techniques](#4-choix-techniques)
-   - [Pourquoi Vite ?](#pourquoi-vite-)
-   - [Pourquoi Nginx ?](#pourquoi-nginx-)
-
-5. [Référence des Commandes](#5-référence-des-commandes)
-   - [Commandes Docker](#commandes-docker)
-   - [Commandes Backend (Maven)](#commandes-backend-maven)
-   - [Commandes Frontend (Vite)](#commandes-frontend-vite)
+- [Guide Technique - Booksnap](#guide-technique---booksnap)
+  - [Table des Matières](#table-des-matières)
+  - [1. Démarrage Rapide](#1-démarrage-rapide)
+    - [Prérequis](#prérequis)
+    - [Lancer l'application (Production)](#lancer-lapplication-production)
+    - [URLs des services](#urls-des-services)
+    - [Connexion à la base de données via pgAdmin](#connexion-à-la-base-de-données-via-pgadmin)
+      - [Depuis pgAdmin Docker (par défaut)](#depuis-pgadmin-docker-par-défaut)
+  - [2. Développement Local](#2-développement-local)
+    - [Workflow Recommandé : Hybride](#workflow-recommandé--hybride)
+    - [Option 1 : DB Docker + Code Local (Recommandé)](#option-1--db-docker--code-local-recommandé)
+      - [Terminal 1 - Base de données](#terminal-1---base-de-données)
+      - [Terminal 2 - Backend](#terminal-2---backend)
+      - [Terminal 3 - Frontend](#terminal-3---frontend)
+      - [Avantages de cette approche](#avantages-de-cette-approche)
+    - [Option 2 : Tout en Docker (Simulation Production)](#option-2--tout-en-docker-simulation-production)
+      - [Quand utiliser cette option ?](#quand-utiliser-cette-option-)
+    - [Comparaison des Approches](#comparaison-des-approches)
+    - [Résumé : Quel Workflow Choisir ?](#résumé--quel-workflow-choisir-)
+    - [Configuration IDE](#configuration-ide)
+      - [IntelliJ IDEA (Backend)](#intellij-idea-backend)
+      - [VS Code (Frontend)](#vs-code-frontend)
+  - [3. Architecture Docker](#3-architecture-docker)
+    - [Structure des fichiers](#structure-des-fichiers)
+    - [Relation entre les fichiers](#relation-entre-les-fichiers)
+      - [docker-compose.yml référence les Dockerfiles](#docker-composeyml-référence-les-dockerfiles)
+    - [Flux de construction](#flux-de-construction)
+    - [Orchestration (docker-compose)](#orchestration-docker-compose)
+      - [Comparaison Dockerfile vs docker-compose](#comparaison-dockerfile-vs-docker-compose)
+    - [Communication entre services](#communication-entre-services)
+      - [Injection des variables](#injection-des-variables)
+  - [4. Choix Techniques](#4-choix-techniques)
+    - [Pourquoi Vite ?](#pourquoi-vite-)
+      - [Le problème sans bundler](#le-problème-sans-bundler)
+      - [Avantages de Vite](#avantages-de-vite)
+      - [Commandes Vite](#commandes-vite)
+      - [Quand exécuter `npm run build` ?](#quand-exécuter-npm-run-build-)
+      - [Flux développement → production](#flux-développement--production)
+    - [Pourquoi Nginx ?](#pourquoi-nginx-)
+      - [Besoins d'une SPA en production](#besoins-dune-spa-en-production)
+      - [Avantages de Nginx](#avantages-de-nginx)
+      - [Configuration SPA (nginx.conf)](#configuration-spa-nginxconf)
+  - [5. Référence des Commandes](#5-référence-des-commandes)
+    - [Commandes Docker](#commandes-docker)
+    - [Commandes Backend (Maven)](#commandes-backend-maven)
+    - [Commandes Frontend (Vite)](#commandes-frontend-vite)
+    - [Cheatsheet Rapide](#cheatsheet-rapide)
 
 ---
 
@@ -71,6 +91,25 @@ docker compose up --build
 | **Frontend** | http://localhost:3000 | Interface utilisateur |
 | **Backend API** | http://localhost:8080 | API REST Spring Boot |
 | **pgAdmin** | http://localhost:5050 | Interface base de données |
+
+### Connexion à la base de données via pgAdmin
+
+1. Ouvrir pgAdmin : http://localhost:5050
+2. Clic droit sur "Servers" → "Register" → "Server..."
+3. Configurer la connexion :
+
+#### Depuis pgAdmin Docker (par défaut)
+
+| Onglet | Champ | Valeur |
+|--------|-------|--------|
+| **General** | Name | `booksnap` (ou autre nom de votre choix) |
+| **Connection** | Host name/address | `db` |
+| **Connection** | Port | `5432` |
+| **Connection** | Maintenance database | `booksnap_db` |
+| **Connection** | Username | `booksnap` |
+| **Connection** | Password | (voir `POSTGRES_PASSWORD` dans `.env`) |
+
+> **Note** : Le port interne Docker est toujours 5432, mais il est mappé sur le port externe défini par `DB_PORT` dans `.env`.
 
 ---
 
