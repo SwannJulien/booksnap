@@ -58,6 +58,12 @@ export class CopySectionModalBks extends LitElement {
             />
           </div>
           <div class="button-container">
+            <button 
+              class="btn-confirm" 
+              type="submit"
+            >
+              Submit
+            </button>
             <button
               class="btn-cancel"
               type="button"
@@ -65,7 +71,6 @@ export class CopySectionModalBks extends LitElement {
             >
               Cancel
             </button>
-            <button class="btn-confirm" type="submit">Submit</button>
           </div>
         </form>
       </div>

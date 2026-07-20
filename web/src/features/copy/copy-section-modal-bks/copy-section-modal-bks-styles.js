@@ -36,6 +36,7 @@ export const copySectionModalBksStyles = css`
   .update-section-form-group label {
     color: var(--clr-text-light);
     font-weight: 500;
+    margin-bottom: .5rem;
   }
 
   .update-section-form-group input {
@@ -82,17 +83,19 @@ export const copySectionModalBksStyles = css`
   }
 
   .btn-cancel {
-    background-color: #382626;
-    color: var(--clr-text-light);
+    background-color: var(--clr-text-muted);
+    color: var(--clr-nav-dark);
+    font-weight: 700;
   }
 
   .btn-cancel:hover {
-    background-color: #2b1d1d;
+    filter: brightness(1.1);
   }
 
   .btn-confirm {
     background-color: var(--clr-accent);
-    color: white;
+    color: var(--clr-nav-dark);
+    font-weight: 700;
   }
 
   .btn-confirm:hover {

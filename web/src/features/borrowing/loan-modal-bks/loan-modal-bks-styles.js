@@ -83,18 +83,20 @@ export const loanModalBksStyles = css`
   .btn-yes {
     background-color: var(--clr-accent);
     color: var(--clr-nav-dark);
+    font-weight: 700;
   }
 
   .btn-yes:hover {
-    opacity: 0.85;
+    filter: brightness(1.1);
   }
 
   .btn-no {
     background-color: var(--clr-text-muted);
     color: var(--clr-nav-dark);
+    font-weight: 700;
   }
 
   .btn-no:hover {
-    opacity: 0.85;
+    filter: brightness(1.1);
   }
 `;
