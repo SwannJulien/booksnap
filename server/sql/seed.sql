@@ -3,17 +3,19 @@ INSERT INTO library (name) VALUES ('Preschool'),('Primary')
 ON CONFLICT (name) DO NOTHING;
 
 -- Insert Users
-INSERT INTO users (first_name, last_name, is_super, email) VALUES
-('Alice',   'Martin',    false, 'alice.martin@example.com'),
-('Bob',     'Johnson',   false, 'bob.johnson@example.com'),
-('Clara',   'Dupont',    false, 'clara.dupont@example.com'),
-('Daniel',  'Smith',     false, 'daniel.smith@example.com'),
-('Emma',    'Wilson',    false, 'emma.wilson@example.com'),
-('Frank',   'Brown',     false, 'frank.brown@example.com'),
-('Grace',   'Taylor',    false, 'grace.taylor@example.com'),
-('Henry',   'Anderson',  false, 'henry.anderson@example.com'),
-('Isla',    'Thomas',    false, 'isla.thomas@example.com'),
-('James',   'White',     true,  'james.white@example.com')
+-- Students belong to a house (named after famous Spanish painters), independently of their key stage.
+-- Staff / super users have no house, key stage or parent email.
+INSERT INTO users (first_name, last_name, is_super, email, genre, parent_email, key_stage, house) VALUES
+('Alice',   'Martin',    false, 'alice.martin@example.com',    'female', 'parent.martin@example.com',   'ks_2',       'Goya'),
+('Bob',     'Johnson',   false, 'bob.johnson@example.com',     'male',   'parent.johnson@example.com',  'ks_3',       'Velazquez'),
+('Clara',   'Dupont',    false, 'clara.dupont@example.com',    'female', 'parent.dupont@example.com',   'ks_1',       'Picasso'),
+('Daniel',  'Smith',     false, 'daniel.smith@example.com',    'male',   'parent.smith@example.com',    'ks_4',       'Dali'),
+('Emma',    'Wilson',    false, 'emma.wilson@example.com',     'female', 'parent.wilson@example.com',   'pre_school', 'Goya'),
+('Frank',   'Brown',     false, 'frank.brown@example.com',     'male',   'parent.brown@example.com',    'ks_2',       'Velazquez'),
+('Grace',   'Taylor',    false, 'grace.taylor@example.com',    'female', 'parent.taylor@example.com',   'ks_5',       'Picasso'),
+('Henry',   'Anderson',  false, 'henry.anderson@example.com',  'male',   'parent.anderson@example.com', 'ks_3',       'Dali'),
+('Isla',    'Thomas',    false, 'isla.thomas@example.com',     'female', 'parent.thomas@example.com',   'ks_1',       'Goya'),
+('James',   'White',     true,  'james.white@example.com',     'male',   NULL,                          NULL,         NULL)
 ON CONFLICT (email) DO NOTHING;
 
 -------------------------------------------------------------------------------------------------------
