@@ -7,6 +7,7 @@ import net.booksnap.domain.borrowing.api.dto.BorrowingResponse;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingRequest;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingResponse;
 import net.booksnap.domain.borrowing.api.dto.GetBorrowingResponse;
+import net.booksnap.domain.borrowing.api.dto.ReturnBorrowingResponse;
 import net.booksnap.domain.borrowing.service.BorrowingService;
 import net.booksnap.domain.common.dto.PagedResponse;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +32,11 @@ public class BorrowingController {
     @ResponseStatus(HttpStatus.CREATED)
     public CreateBorrowingResponse createBorrowing(@RequestBody @Valid CreateBorrowingRequest createBorrowingRequest) {
         return borrowingService.createBorrowing(createBorrowingRequest);
+    }
+
+    @PostMapping("/{borrowingId}/return")
+    public ReturnBorrowingResponse returnBorrowing(@PathVariable Long borrowingId) {
+        return borrowingService.returnBorrowing(borrowingId);
     }
 
     @GetMapping

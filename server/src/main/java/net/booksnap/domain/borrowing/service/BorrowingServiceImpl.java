@@ -1,5 +1,6 @@
 package net.booksnap.domain.borrowing.service;
 
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import net.booksnap.domain.author.Author;
 import net.booksnap.domain.book.Book;
@@ -9,12 +10,17 @@ import net.booksnap.domain.borrowing.api.dto.BorrowingResponse;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingRequest;
 import net.booksnap.domain.borrowing.api.dto.CreateBorrowingResponse;
 import net.booksnap.domain.borrowing.api.dto.GetBorrowingResponse;
+import net.booksnap.domain.borrowing.api.dto.ReturnBorrowingResponse;
 import net.booksnap.domain.borrowing.repository.BorrowingRepository;
 import net.booksnap.domain.common.dto.PagedResponse;
 import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.repository.CopyRepository;
+import net.booksnap.domain.hold.Hold;
+import net.booksnap.domain.hold.repository.HoldRepository;
 import net.booksnap.domain.user.User;
 import net.booksnap.domain.user.repository.UserRepository;
+import net.booksnap.exception.borrowing.BorrowingAlreadyReturnedException;
+import net.booksnap.exception.borrowing.BorrowingNotFoundException;
 import net.booksnap.exception.copy.CopyNotAvailableException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.user.UserNotFoundException;
@@ -31,29 +37,41 @@ import java.util.stream.Collectors;
 public class BorrowingServiceImpl implements BorrowingService {
 
     private static final int BORROWING_DURATION_WEEKS = 2;
+    private static final int HOLD_PICKUP_WINDOW_WEEKS = 1;
 
     private final BorrowingRepository borrowingRepository;
     private final CopyRepository copyRepository;
     private final UserRepository userRepository;
+    private final HoldRepository holdRepository;
+    private final EntityManager entityManager;
 
     public BorrowingServiceImpl(BorrowingRepository borrowingRepository,
                                 CopyRepository copyRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository,
+                                HoldRepository holdRepository,
+                                EntityManager entityManager) {
         this.borrowingRepository = borrowingRepository;
         this.copyRepository = copyRepository;
         this.userRepository = userRepository;
+        this.holdRepository = holdRepository;
+        this.entityManager = entityManager;
     }
 
+    @Transactional
     public CreateBorrowingResponse createBorrowing(CreateBorrowingRequest createBorrowingRequest) {
         Copy copy = copyRepository.findById(createBorrowingRequest.copyId())
                 .orElseThrow(() -> new CopyNotFoundException(createBorrowingRequest.copyId()));
 
-        if (!copy.getStatus().isBorrowable()) {
-            throw new CopyNotAvailableException(copy.getId(), copy.getStatus());
-        }
-
         User user = userRepository.findById(createBorrowingRequest.userId())
                 .orElseThrow(() -> new UserNotFoundException(createBorrowingRequest.userId()));
+
+        // A copy kept on hold is off-limits to everyone except the student it is held
+        // for; them borrowing it is what fulfills the hold.
+        if (copy.getStatus() == net.booksnap.domain.copy.Status.on_hold) {
+            fulfillHoldOrReject(copy, user);
+        } else if (!copy.getStatus().isBorrowable()) {
+            throw new CopyNotAvailableException(copy.getId(), copy.getStatus());
+        }
 
         LocalDate startDate = LocalDate.now();
 
@@ -74,6 +92,96 @@ public class BorrowingServiceImpl implements BorrowingService {
                 savedBorrowing.getStartDate(),
                 savedBorrowing.getEndDate()
         );
+    }
+
+    /**
+     * Marks the active hold on this copy as fulfilled, so the borrowing can go ahead.
+     * Rejects the borrowing if the copy is being held for somebody else.
+     * <p>
+     * The flush matters: marking the hold fulfilled makes a trigger release the copy
+     * back to 'available', which has to happen before the borrowing is inserted and
+     * marks it 'borrowed'.
+     */
+    private void fulfillHoldOrReject(Copy copy, User user) {
+        Hold hold = holdRepository
+                .findFirstByCopyIdAndStatus(copy.getId(), net.booksnap.domain.hold.Status.active)
+                .orElseThrow(() -> new CopyNotAvailableException(copy.getId(), copy.getStatus()));
+
+        if (!hold.getUser().getId().equals(user.getId())) {
+            throw new CopyNotAvailableException(copy.getId(), copy.getStatus());
+        }
+
+        hold.setStatus(net.booksnap.domain.hold.Status.fulfilled);
+        holdRepository.saveAndFlush(hold);
+        entityManager.refresh(copy);
+    }
+
+    /**
+     * Returns a copy and hands it straight to the next student in the queue, if any.
+     * <p>
+     * Ordering matters here: the borrowing update must reach the database before the
+     * hold update, so the copy-status triggers fire in the right order (return restores
+     * the copy, promotion then puts it back on hold). Hence the explicit flushes, and
+     * the refreshes to read back what the triggers wrote.
+     */
+    @Transactional
+    public ReturnBorrowingResponse returnBorrowing(Long borrowingId) {
+        Borrowing borrowing = borrowingRepository.findById(borrowingId)
+                .orElseThrow(() -> new BorrowingNotFoundException(borrowingId));
+
+        if (borrowing.getStatus() == Status.returned) {
+            throw new BorrowingAlreadyReturnedException(borrowingId);
+        }
+
+        borrowing.setStatus(Status.returned);
+        borrowingRepository.saveAndFlush(borrowing);
+
+        Copy copy = borrowing.getCopy();
+        entityManager.refresh(copy);
+
+        Long promotedHoldId = promoteNextPendingHold(copy);
+
+        return new ReturnBorrowingResponse(
+                borrowing.getId(),
+                copy.getId(),
+                borrowing.getUser().getId(),
+                borrowing.getStatus(),
+                LocalDate.now(),
+                copy.getStatus(),
+                promotedHoldId
+        );
+    }
+
+    /**
+     * Assigns a just-returned copy to the student who has been queued longest for that
+     * book. Does nothing if the copy did not come back available — a damaged copy stays
+     * damaged, and a copy already on hold is spoken for.
+     *
+     * @return the id of the promoted hold, or null if nobody was queued
+     */
+    private Long promoteNextPendingHold(Copy copy) {
+        if (copy.getStatus() != net.booksnap.domain.copy.Status.available) {
+            return null;
+        }
+
+        return holdRepository
+                .findFirstByBookIdAndStatusOrderByCreatedDateAsc(
+                        copy.getBook().getId(), net.booksnap.domain.hold.Status.pending)
+                .map(hold -> {
+                    LocalDate today = LocalDate.now();
+                    hold.setCopy(copy);
+                    hold.setStatus(net.booksnap.domain.hold.Status.active);
+                    hold.setStartDate(today);
+                    hold.setEndDate(today.plusWeeks(HOLD_PICKUP_WINDOW_WEEKS));
+                    holdRepository.saveAndFlush(hold);
+                    entityManager.refresh(copy);
+
+                    // TODO: notify the user (hold_ready) once NotificationService exists
+                    log.info("Hold {} promoted to active on copy {}, to collect before {}",
+                            hold.getId(), copy.getId(), hold.getEndDate());
+                    return hold.getId();
+                })
+                .orElse(null);
     }
 
     public GetBorrowingResponse getActiveBorrowingByCopyId(Long copyId) {

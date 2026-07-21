@@ -3,6 +3,8 @@ package net.booksnap.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import net.booksnap.exception.book.BookAlreadyExistsException;
 import net.booksnap.exception.book.BookNotFoundException;
+import net.booksnap.exception.borrowing.BorrowingAlreadyReturnedException;
+import net.booksnap.exception.borrowing.BorrowingNotFoundException;
 import net.booksnap.exception.common.BadRequestException;
 import net.booksnap.exception.copy.CopyNotAvailableException;
 import net.booksnap.exception.copy.CopyNotFoundException;
@@ -113,6 +115,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CopyNotAvailableException.class)
     public ResponseEntity<ApiError> handleCopyNotAvailable(CopyNotAvailableException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BorrowingNotFoundException.class)
+    public ResponseEntity<ApiError> handleBorrowingNotFound(BorrowingNotFoundException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(BorrowingAlreadyReturnedException.class)
+    public ResponseEntity<ApiError> handleBorrowingAlreadyReturned(BorrowingAlreadyReturnedException ex, HttpServletRequest request) {
         ApiError error = new ApiError(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),

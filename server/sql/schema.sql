@@ -161,7 +161,18 @@ CREATE TABLE hold (
     CHECK (start_date IS NULL OR end_date IS NULL OR start_date <= end_date)
 );
 
-CREATE TYPE notification_type AS ENUM ('overdue_reminder', 'overdue_follow_up', 'hold_ready', 'hold_follow_up');
+-- Hold queue: when a copy comes back, the oldest pending hold for that book is
+-- promoted to active, so created_date is the queue position.
+CREATE INDEX idx_hold_pending_queue
+    ON hold (book_id, created_date)
+    WHERE status = 'pending';
+
+-- A user can only queue once per book
+CREATE UNIQUE INDEX uq_hold_one_active_per_user_book
+    ON hold (user_id, book_id)
+    WHERE status IN ('pending', 'active');
+
+CREATE TYPE notification_type AS ENUM ('overdue_reminder', 'overdue_follow_up', 'hold_ready', 'hold_follow_up', 'hold_expired');
 
 CREATE TABLE notification (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -206,7 +217,11 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_sync_copy_on_borrowing_insert();
 
 -- 2. When a borrowing is returned, restore the copy: a damaged copy stays
---    damaged, otherwise on_hold if an active hold exists, otherwise available
+--    damaged, otherwise on_hold if an active hold exists, otherwise available.
+--    Note: promoting the next pending hold to active happens in the service layer
+--    (it also sends a notification), in the same transaction as the return. So a
+--    returned copy may pass through 'available' here before the promotion flips
+--    it to 'on_hold' — that intermediate state is never visible outside the tx.
 CREATE OR REPLACE FUNCTION fn_sync_copy_on_borrowing_update()
 RETURNS TRIGGER AS $$
 BEGIN
