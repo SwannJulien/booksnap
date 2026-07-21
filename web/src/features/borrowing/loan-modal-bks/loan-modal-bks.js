@@ -14,11 +14,18 @@ export class LoanModalBks extends LitElement {
     open: { type: Boolean, reflect: true },
     copyId: { type: String },
     bookTitle: { type: String },
+    // Set by the caller when the copy is already known to be unavailable, so the
+    // modal opens straight on the explanation instead of offering a loan
+    unavailable: { type: Boolean },
+    copyStatus: { type: String },
     _step: { type: String, state: true },
     _query: { type: String, state: true },
     _students: { type: Array, state: true },
     _selectedStudent: { type: Object, state: true },
     _error: { type: String, state: true },
+    // True when this modal itself hit the 409, as opposed to being opened on an
+    // already-unavailable copy. Kept out of copyStatus, which the parent owns.
+    _conflict: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -26,6 +33,8 @@ export class LoanModalBks extends LitElement {
     this.open = false;
     this.copyId = null;
     this.bookTitle = '';
+    this.unavailable = false;
+    this.copyStatus = '';
     this._debounceTimer = null;
     this._resetState();
   }
@@ -44,11 +53,12 @@ export class LoanModalBks extends LitElement {
   }
 
   _resetState() {
-    this._step = 'offer';
+    this._step = this.unavailable ? 'unavailable' : 'offer';
     this._query = '';
     this._students = null;
     this._selectedStudent = null;
     this._error = '';
+    this._conflict = false;
   }
 
   render() {
@@ -67,6 +77,8 @@ export class LoanModalBks extends LitElement {
         return this._confirmTpl;
       case 'success':
         return this._successTpl;
+      case 'unavailable':
+        return this._unavailableTpl;
       default:
         return this._offerTpl;
     }
@@ -173,6 +185,32 @@ export class LoanModalBks extends LitElement {
     `;
   }
 
+  get _unavailableTpl() {
+    return html`
+      <div class="loan-modal-content">
+        <h2>
+          <span class="book-title-highlight">${this.bookTitle}</span>
+          is no longer available.
+        </h2>
+        <p class="unavailable-detail">${this._unavailableReason}</p>
+        <div class="button-container">
+          <button class="btn-no" @click=${this._handleClose}>Close</button>
+        </div>
+      </div>
+    `;
+  }
+
+  get _unavailableReason() {
+    const status = this._conflict ? 'borrowed' : this.copyStatus?.toLowerCase();
+
+    if (!status || status === 'borrowed') {
+      return 'Someone else borrowed this copy a moment ago.';
+    }
+
+    const readable = status.replace(/_/g, ' ');
+    return `This copy is now marked as "${readable}" and cannot be lent.`;
+  }
+
   _handleOfferYes() {
     this._step = 'search';
   }
@@ -229,6 +267,21 @@ export class LoanModalBks extends LitElement {
         }),
       );
     } catch (err) {
+      // The copy was taken between the availability check and this confirmation:
+      // there is nothing to retry, so explain it and let the caller refresh.
+      if (err.status === 409) {
+        this._conflict = true;
+        this._step = 'unavailable';
+        this.dispatchEvent(
+          new CustomEvent('copy-unavailable', {
+            detail: { copyId: this.copyId },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+        return;
+      }
+
       // eslint-disable-next-line no-console
       console.error('Failed to create borrowing:', err);
       this._error = err.message;

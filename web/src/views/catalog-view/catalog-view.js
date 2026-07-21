@@ -7,6 +7,7 @@ import '../../components/search-bar-bks/search-bar-bks.js';
 import '../../features/book/book-form-bks/book-form-bks.js';
 import '../../features/book/book-table-bks/book-table-bks.js';
 import { getBooks, updateBook } from '../../api/book.js';
+import { getBorrowingByCopyId } from '../../api/borrowing.js';
 import { toFormFormat } from '../../utils/bookMapper.js';
 import { mapBookFormData } from '../../utils/formDataMapper.js';
 import { SearchController } from '../../controllers/search-controller.js';
@@ -16,6 +17,7 @@ import '../../features/book/delete-book-modal-bks/delete-book-modal-bks.js';
 import '../../features/copy/copy-section-modal-bks/copy-section-modal-bks.js';
 import '../../features/copy/delete-copy-modal-bks/delete-copy-modal-bks.js';
 import '../../features/book/create-book-bks/create-book-bks.js';
+import '../../features/borrowing/loan-modal-bks/loan-modal-bks.js';
 
 export class CatalogView extends LitElement {
   static styles = [catalogView, sharedStyles];
@@ -28,6 +30,7 @@ export class CatalogView extends LitElement {
     qrCopy: { type: Object, state: true },
     copyToUpdate: { type: Object, state: true },
     copyToDelete: { type: Object, state: true },
+    copyToBorrow: { type: Object, state: true },
     showCreateModal: { type: Boolean, state: true },
   };
 
@@ -46,6 +49,7 @@ export class CatalogView extends LitElement {
     this.qrCopy = null;
     this.copyToUpdate = null;
     this.copyToDelete = null;
+    this.copyToBorrow = null;
     this.showCreateModal = false;
   }
 
@@ -63,7 +67,7 @@ export class CatalogView extends LitElement {
       ${this._headerTpl} ${this._searchbarTpl} ${this._tableTpl}
       ${this._deleteModalTpl} ${this._updateModalTpl} ${this._createModalTpl}
       ${this._createBookBksTpl} ${this._qrModalTpl} ${this._updateCopyModalTpl}
-      ${this._deleteCopyModalTpl}
+      ${this._deleteCopyModalTpl} ${this._loanModalTpl}
     `;
   }
 
@@ -199,6 +203,9 @@ export class CatalogView extends LitElement {
         break;
       case 'delete-copy':
         this._handleDeleteCopy(data);
+        break;
+      case 'borrow-book':
+        this._handleBorrowBook(data);
         break;
       default:
         break;
@@ -401,6 +408,66 @@ export class CatalogView extends LitElement {
     const { bookId } = e.detail;
     this.copyToDelete = null;
 
+    if (bookId) {
+      this.shadowRoot.querySelector('book-table-bks')?.refreshCopies(bookId);
+    }
+  }
+
+  get _loanModalTpl() {
+    return html`
+      <loan-modal-bks
+        ?open=${!!this.copyToBorrow}
+        .copyId=${this.copyToBorrow?.copyId}
+        .bookTitle=${this.copyToBorrow?.bookTitle}
+        .unavailable=${!!this.copyToBorrow?.unavailable}
+        .copyStatus=${this.copyToBorrow?.copyStatus ?? ''}
+        @modal-close=${this._handleLoanModalClose}
+        @loan-created=${this._handleLoanCreated}
+        @copy-unavailable=${this._handleCopyUnavailable}
+      ></loan-modal-bks>
+    `;
+  }
+
+  // Same flow as scanning the copy's QR code, minus the scan: the copy id is
+  // already known, so go straight to confirming the copy is still available.
+  async _handleBorrowBook(copy) {
+    try {
+      const result = await getBorrowingByCopyId(copy.id);
+      const isAvailable = result?.copyStatus === 'available';
+
+      this.copyToBorrow = {
+        copyId: String(copy.id),
+        bookTitle: result?.bookTitle ?? copy.bookTitle,
+        bookId: copy.bookId,
+        // The table can be out of date: another librarian may have lent this
+        // copy since the row was rendered
+        unavailable: !isAvailable,
+        copyStatus: result?.copyStatus,
+      };
+
+      if (!isAvailable) {
+        this._refreshCopiesOf(copy.bookId);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to check copy ${copy.id} before lending:`, err);
+    }
+  }
+
+  _handleLoanModalClose() {
+    this.copyToBorrow = null;
+  }
+
+  _handleLoanCreated() {
+    this._refreshCopiesOf(this.copyToBorrow?.bookId);
+  }
+
+  // The loan was refused because the copy was taken in the meantime
+  _handleCopyUnavailable() {
+    this._refreshCopiesOf(this.copyToBorrow?.bookId);
+  }
+
+  _refreshCopiesOf(bookId) {
     if (bookId) {
       this.shadowRoot.querySelector('book-table-bks')?.refreshCopies(bookId);
     }

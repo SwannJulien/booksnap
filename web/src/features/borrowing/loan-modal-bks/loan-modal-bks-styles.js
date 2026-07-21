@@ -63,6 +63,11 @@ export const loanModalBksStyles = css`
     color: var(--clr-warning);
   }
 
+  .unavailable-detail {
+    margin: 0;
+    color: var(--clr-text-muted);
+  }
+
   .button-container {
     display: flex;
     gap: 1rem;

@@ -55,9 +55,12 @@ export async function createBorrowing(copyId, userId) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(
+    const error = new Error(
       errorData.message || `Failed to create borrowing: ${response.status}`,
     );
+    // 409 means the copy stopped being available while the loan was being filled in
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
