@@ -18,6 +18,7 @@ import '../../features/copy/copy-section-modal-bks/copy-section-modal-bks.js';
 import '../../features/copy/delete-copy-modal-bks/delete-copy-modal-bks.js';
 import '../../features/book/create-book-bks/create-book-bks.js';
 import '../../features/borrowing/loan-modal-bks/loan-modal-bks.js';
+import '../../features/borrowing/return-modal-bks/return-modal-bks.js';
 import '../../features/hold/hold-modal-bks/hold-modal-bks.js';
 
 export class CatalogView extends LitElement {
@@ -32,6 +33,7 @@ export class CatalogView extends LitElement {
     copyToUpdate: { type: Object, state: true },
     copyToDelete: { type: Object, state: true },
     copyToBorrow: { type: Object, state: true },
+    borrowingToReturn: { type: Object, state: true },
     bookToHold: { type: Object, state: true },
     showCreateModal: { type: Boolean, state: true },
   };
@@ -52,6 +54,7 @@ export class CatalogView extends LitElement {
     this.copyToUpdate = null;
     this.copyToDelete = null;
     this.copyToBorrow = null;
+    this.borrowingToReturn = null;
     this.bookToHold = null;
     this.showCreateModal = false;
   }
@@ -70,7 +73,8 @@ export class CatalogView extends LitElement {
       ${this._headerTpl} ${this._searchbarTpl} ${this._tableTpl}
       ${this._deleteModalTpl} ${this._updateModalTpl} ${this._createModalTpl}
       ${this._createBookBksTpl} ${this._qrModalTpl} ${this._updateCopyModalTpl}
-      ${this._deleteCopyModalTpl} ${this._loanModalTpl} ${this._holdModalTpl}
+      ${this._deleteCopyModalTpl} ${this._loanModalTpl} ${this._returnModalTpl}
+      ${this._holdModalTpl}
     `;
   }
 
@@ -210,6 +214,9 @@ export class CatalogView extends LitElement {
       case 'borrow-book':
       case 'hand-over-hold':
         this._handleBorrowBook(data);
+        break;
+      case 'return-book':
+        this._handleReturnBook(data);
         break;
       case 'hold-book':
         this._handleHoldBook(data);
@@ -477,6 +484,54 @@ export class CatalogView extends LitElement {
   // The loan was refused because the copy was taken in the meantime
   _handleCopyUnavailable() {
     this._refreshCopiesOf(this.copyToBorrow?.bookId);
+  }
+
+  get _returnModalTpl() {
+    return html`
+      <return-modal-bks
+        ?open=${!!this.borrowingToReturn}
+        .borrowingId=${this.borrowingToReturn?.id}
+        .bookTitle=${this.borrowingToReturn?.bookTitle ?? ''}
+        .studentName=${this.borrowingToReturn?.studentName ?? ''}
+        .notLoaned=${!!this.borrowingToReturn?.notLoaned}
+        @modal-close=${this._handleReturnModalClose}
+        @borrowing-returned=${this._handleBorrowingReturned}
+      ></return-modal-bks>
+    `;
+  }
+
+  // The row only says the copy is borrowed; who has it comes from the same lookup the
+  // scanner uses, which also catches a row that went stale.
+  async _handleReturnBook(copy) {
+    try {
+      const result = await getBorrowingByCopyId(copy.id);
+      const borrowing = result?.borrowing;
+
+      this.borrowingToReturn = {
+        id: borrowing?.id,
+        bookId: copy.bookId,
+        bookTitle: result?.bookTitle ?? copy.bookTitle,
+        studentName: borrowing
+          ? `${borrowing.firstName} ${borrowing.lastName}`
+          : '',
+        notLoaned: !borrowing,
+      };
+
+      if (!borrowing) {
+        this._refreshCopiesOf(copy.bookId);
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to look up the loan on copy ${copy.id}:`, err);
+    }
+  }
+
+  _handleReturnModalClose() {
+    this.borrowingToReturn = null;
+  }
+
+  _handleBorrowingReturned() {
+    this._refreshCopiesOf(this.borrowingToReturn?.bookId);
   }
 
   get _holdModalTpl() {

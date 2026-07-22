@@ -162,6 +162,19 @@ export class CopyTableBks extends LitElement {
             },
           ]
         : []),
+      // A copy that is out can be checked back in; the student it goes back from is
+      // looked up when the modal opens
+      ...(copy.status?.toLowerCase() === 'borrowed'
+        ? [
+            {
+              action: 'return-book',
+              data,
+              path: 'M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z',
+              label: 'Return book',
+              class: '',
+            },
+          ]
+        : []),
       // A copy kept on hold can only go to the student it was set aside for, and that
       // loan is what fulfills their hold
       ...(copy.status?.toLowerCase() === 'on_hold'

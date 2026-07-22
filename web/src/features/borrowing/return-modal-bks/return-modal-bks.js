@@ -12,6 +12,9 @@ export class ReturnModalBks extends LitElement {
     borrowingId: { type: Number },
     bookTitle: { type: String },
     studentName: { type: String },
+    // Set by the caller when the copy turns out not to be on loan at all, so the modal
+    // explains instead of offering a return that would only be refused
+    notLoaned: { type: Boolean },
     _step: { type: String, state: true },
     _copyStatus: { type: String, state: true },
     _error: { type: String, state: true },
@@ -23,6 +26,7 @@ export class ReturnModalBks extends LitElement {
     this.borrowingId = null;
     this.bookTitle = '';
     this.studentName = '';
+    this.notLoaned = false;
     this._resetState();
   }
 
@@ -33,7 +37,7 @@ export class ReturnModalBks extends LitElement {
   }
 
   _resetState() {
-    this._step = 'confirm';
+    this._step = this.notLoaned ? 'not-loaned' : 'confirm';
     this._copyStatus = '';
     this._error = '';
   }
@@ -41,9 +45,20 @@ export class ReturnModalBks extends LitElement {
   render() {
     return html`
       <modal-bks ?open=${this.open} @modal-close=${this._handleClose}>
-        ${this._step === 'success' ? this._successTpl : this._confirmTpl}
+        ${this._stepTpl}
       </modal-bks>
     `;
+  }
+
+  get _stepTpl() {
+    switch (this._step) {
+      case 'success':
+        return this._successTpl;
+      case 'not-loaned':
+        return this._notLoanedTpl;
+      default:
+        return this._confirmTpl;
+    }
   }
 
   get _confirmTpl() {
@@ -90,6 +105,27 @@ export class ReturnModalBks extends LitElement {
     `;
   }
 
+  get _notLoanedTpl() {
+    return html`
+      <div class="return-modal-content">
+        <h2>
+          <span class="book-title-highlight">${this.bookTitle}</span>
+          is not out on loan.
+        </h2>
+        <p class="return-hint">
+          Somebody has returned it already, so there is nothing to check in.
+        </p>
+        <div class="button-container">
+          <button-bks
+            variant="secondary"
+            label="Close"
+            @button-click=${this._handleClose}
+          ></button-bks>
+        </div>
+      </div>
+    `;
+  }
+
   get _copyStatusLabel() {
     switch (this._copyStatus) {
       case 'available':
@@ -114,9 +150,10 @@ export class ReturnModalBks extends LitElement {
         }),
       );
     } catch (err) {
-      // 409: somebody else already checked this loan back in
+      // 409: somebody else checked this loan back in first. There is nothing to
+      // retry, so say so and let the caller refresh its stale list.
       if (err.status === 409) {
-        this._error = 'This book has already been returned.';
+        this._step = 'not-loaned';
         this.dispatchEvent(
           new CustomEvent('borrowing-returned', {
             detail: { borrowingId: this.borrowingId },

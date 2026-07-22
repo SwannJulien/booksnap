@@ -196,6 +196,10 @@ public class BorrowingServiceImpl implements BorrowingService {
                         borrowing.getId(),
                         borrowing.getCopy().getId(),
                         borrowing.getUser().getId(),
+                        // Named, so a scan can ask "return this from {student}?" without
+                        // a second round trip
+                        borrowing.getUser().getFirstName(),
+                        borrowing.getUser().getLastName(),
                         borrowing.getStatus(),
                         borrowing.getStartDate(),
                         borrowing.getEndDate()

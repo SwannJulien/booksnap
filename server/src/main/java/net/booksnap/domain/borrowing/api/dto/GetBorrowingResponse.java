@@ -19,6 +19,8 @@ public record GetBorrowingResponse(
             Long id,
             Long copyId,
             Long userId,
+            String firstName,
+            String lastName,
             Status status,
             LocalDate startDate,
             LocalDate endDate

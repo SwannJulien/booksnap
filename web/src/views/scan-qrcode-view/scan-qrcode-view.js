@@ -4,6 +4,7 @@ import { sharedStyles } from '../../shared-styles.js';
 import { getBorrowingByCopyId } from '../../api/borrowing.js';
 import '../../features/scanner/barcode-scanner-bks/barcode-scanner-bks.js';
 import '../../features/borrowing/loan-modal-bks/loan-modal-bks.js';
+import '../../features/borrowing/return-modal-bks/return-modal-bks.js';
 
 // QR content format: COPY:{copyId}:LIB:{libraryId}:BOOK:{bookId}:CHK:{checksum}
 function extractCopyId(code) {
@@ -20,14 +21,16 @@ export class ScanQrcodeView extends LitElement {
   static properties = {
     _scannedCode: { type: String, state: true },
     _copyId: { type: String, state: true },
-    _scannedCopy: { type: Object, state: true },
+    _copyToLend: { type: Object, state: true },
+    _borrowingToReturn: { type: Object, state: true },
   };
 
   constructor() {
     super();
     this._scannedCode = null;
     this._copyId = null;
-    this._scannedCopy = null;
+    this._copyToLend = null;
+    this._borrowingToReturn = null;
   }
 
   _handleScanResult(e) {
@@ -49,16 +52,19 @@ export class ScanQrcodeView extends LitElement {
         return;
       }
       if (result.borrowing) {
-        console.log(
-          `Copy ${copyId} is borrowed (status: ${result.copyStatus})`,
-          result.borrowing,
-        );
+        // The copy is out: scanning it at the desk is the student bringing it back
+        const { id, firstName, lastName } = result.borrowing;
+        this._borrowingToReturn = {
+          id,
+          bookTitle: result.bookTitle,
+          studentName: `${firstName} ${lastName}`,
+        };
       } else if (result.copyStatus === 'available') {
-        this._scannedCopy = { copyId, bookTitle: result.bookTitle };
+        this._copyToLend = { copyId, bookTitle: result.bookTitle };
       } else if (result.copyStatus === 'on_hold' && result.hold) {
         // Set aside for one student: scanning it at the desk is them collecting it,
         // which turns the hold into a loan
-        this._scannedCopy = {
+        this._copyToLend = {
           copyId,
           bookTitle: result.bookTitle,
           hold: result.hold,
@@ -74,7 +80,11 @@ export class ScanQrcodeView extends LitElement {
   }
 
   _handleLoanModalClose() {
-    this._scannedCopy = null;
+    this._copyToLend = null;
+  }
+
+  _handleReturnModalClose() {
+    this._borrowingToReturn = null;
   }
 
   render() {
@@ -84,12 +94,19 @@ export class ScanQrcodeView extends LitElement {
         @sendBarecode=${this._handleScanResult}
       ></barcode-scanner-bks>
       <loan-modal-bks
-        ?open=${!!this._scannedCopy}
-        .copyId=${this._scannedCopy?.copyId}
-        .bookTitle=${this._scannedCopy?.bookTitle}
-        .hold=${this._scannedCopy?.hold ?? null}
+        ?open=${!!this._copyToLend}
+        .copyId=${this._copyToLend?.copyId}
+        .bookTitle=${this._copyToLend?.bookTitle}
+        .hold=${this._copyToLend?.hold ?? null}
         @modal-close=${this._handleLoanModalClose}
       ></loan-modal-bks>
+      <return-modal-bks
+        ?open=${!!this._borrowingToReturn}
+        .borrowingId=${this._borrowingToReturn?.id}
+        .bookTitle=${this._borrowingToReturn?.bookTitle ?? ''}
+        .studentName=${this._borrowingToReturn?.studentName ?? ''}
+        @modal-close=${this._handleReturnModalClose}
+      ></return-modal-bks>
     `;
   }
 }
