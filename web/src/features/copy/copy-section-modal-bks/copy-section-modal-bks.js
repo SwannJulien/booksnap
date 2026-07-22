@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { copySectionModalBksStyles } from './copy-section-modal-bks-styles.js';
 import { updateCopy } from '../../../api/copy.js';
 import '../../../components/modal-bks/modal-bks.js';
+import '../../../components/button-bks/button-bks.js';
 
 export class CopySectionModalBks extends LitElement {
   static styles = [copySectionModalBksStyles];
@@ -40,9 +41,11 @@ export class CopySectionModalBks extends LitElement {
     return html`
       <div class="update-section-modal-content">
         <h2>Enter the new section for this copy</h2>
-        ${this._error
-          ? html`<p class="update-section-error">${this._error}</p>`
-          : ''}
+        ${
+          this._error
+            ? html`<p class="update-section-error">${this._error}</p>`
+            : ''
+        }
         <form @submit=${this._handleSubmit}>
           <div class="update-section-form-group">
             <label for="new-section-name">Section</label>
@@ -58,19 +61,13 @@ export class CopySectionModalBks extends LitElement {
             />
           </div>
           <div class="button-container">
-            <button 
-              class="btn-confirm" 
-              type="submit"
-            >
-              Submit
-            </button>
-            <button
-              class="btn-cancel"
+            <button-bks type="submit" label="Submit"></button-bks>
+            <button-bks
+              variant="secondary"
               type="button"
-              @click=${this._handleClose}
-            >
-              Cancel
-            </button>
+              label="Cancel"
+              @button-click=${this._handleClose}
+            ></button-bks>
           </div>
         </form>
       </div>

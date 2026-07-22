@@ -3,6 +3,7 @@ import { loanModalBksStyles } from './loan-modal-bks-styles.js';
 import { searchUsers } from '../../../api/user.js';
 import { createBorrowing } from '../../../api/borrowing.js';
 import '../../../components/modal-bks/modal-bks.js';
+import '../../../components/button-bks/button-bks.js';
 
 const MIN_QUERY_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -93,8 +94,15 @@ export class LoanModalBks extends LitElement {
         </h2>
         <h2>Do you want to make a loan?</h2>
         <div class="button-container">
-          <button class="btn-yes" @click=${this._handleOfferYes}>Yes</button>
-          <button class="btn-no" @click=${this._handleClose}>No</button>
+          <button-bks
+            label="Yes"
+            @button-click=${this._handleOfferYes}
+          ></button-bks>
+          <button-bks
+            variant="secondary"
+            label="No"
+            @button-click=${this._handleClose}
+          ></button-bks>
         </div>
       </div>
     `;
@@ -163,8 +171,15 @@ export class LoanModalBks extends LitElement {
         </h2>
         ${this._error ? html`<p class="error">${this._error}</p>` : ''}
         <div class="button-container">
-          <button class="btn-yes" @click=${this._handleConfirmYes}>Yes</button>
-          <button class="btn-no" @click=${this._handleConfirmNo}>No</button>
+          <button-bks
+            label="Yes"
+            @button-click=${this._handleConfirmYes}
+          ></button-bks>
+          <button-bks
+            variant="secondary"
+            label="No"
+            @button-click=${this._handleConfirmNo}
+          ></button-bks>
         </div>
       </div>
     `;
@@ -179,7 +194,10 @@ export class LoanModalBks extends LitElement {
           has been assigned to ${student?.firstName} ${student?.lastName}.
         </h2>
         <div class="button-container">
-          <button class="btn-yes" @click=${this._handleClose}>Close</button>
+          <button-bks
+            label="Close"
+            @button-click=${this._handleClose}
+          ></button-bks>
         </div>
       </div>
     `;
@@ -194,7 +212,11 @@ export class LoanModalBks extends LitElement {
         </h2>
         <p class="unavailable-detail">${this._unavailableReason}</p>
         <div class="button-container">
-          <button class="btn-no" @click=${this._handleClose}>Close</button>
+          <button-bks
+            variant="secondary"
+            label="Close"
+            @button-click=${this._handleClose}
+          ></button-bks>
         </div>
       </div>
     `;

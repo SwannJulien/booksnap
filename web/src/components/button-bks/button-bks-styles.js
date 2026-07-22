@@ -18,12 +18,22 @@ export const buttonBksStyles = [
       font-size: var(--step--1);
       font-weight: 700;
       cursor: pointer;
-      transition: background-color 0.2s ease;
+      transition: filter 0.2s ease;
       text-align: center;
     }
 
+    :host([variant='secondary']) button {
+      background-color: var(--clr-text-muted);
+      color: var(--clr-nav-dark);
+    }
+
+    :host([variant='danger']) button {
+      background-color: var(--clr-warning);
+      color: #fff;
+    }
+
     button:hover:not(:disabled) {
-      background-color: #279c71;
+      filter: brightness(1.1);
     }
 
     button:disabled {

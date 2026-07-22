@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { deleteCopyModalBksStyles } from './delete-copy-modal-bks-styles.js';
 import { deleteCopy } from '../../../api/copy.js';
 import '../../../components/modal-bks/modal-bks.js';
+import '../../../components/button-bks/button-bks.js';
 
 export class DeleteCopyModalBks extends LitElement {
   static styles = [deleteCopyModalBksStyles];
@@ -30,17 +31,17 @@ export class DeleteCopyModalBks extends LitElement {
           <p>Are you sure you want to delete this copy?</p>
           <p>This action cannot be undone.</p>
           <div class="button-container">
-            <button class="btn-delete" @click=${this._handleConfirmDelete}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
-                <path
-                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"
-                />
-              </svg>
-              Delete Copy
-            </button>
-            <button class="btn-cancel" @click=${this._handleClose}>
-              Cancel
-            </button>
+            <button-bks
+              variant="danger"
+              icon="delete"
+              label="Delete Copy"
+              @button-click=${this._handleConfirmDelete}
+            ></button-bks>
+            <button-bks
+              variant="secondary"
+              label="Cancel"
+              @button-click=${this._handleClose}
+            ></button-bks>
           </div>
         </div>
       </modal-bks>

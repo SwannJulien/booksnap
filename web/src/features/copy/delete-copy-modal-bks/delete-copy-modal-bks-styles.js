@@ -32,43 +32,7 @@ export const deleteCopyModalBksStyles = css`
     margin-top: 2rem;
   }
 
-  .btn-cancel,
-  .btn-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius-default);
-    font-size: 1rem;
-    cursor: pointer;
-    min-width: 140px;
-  }
-
-  .btn-cancel {
-    background-color: var(--clr-text-muted);
-    color: var(--clr-nav-dark);
-    font-weight: 700;
-  }
-
-  .btn-cancel:hover {
-    filter: brightness(1.1);
-  }
-
-  .btn-delete {
-    background-color: #e31b1b;
-    color: white;
-    font-weight: 700;
-  }
-
-  .btn-delete:hover {
-     filter: brightness(1.1);
-  }
-
-  .btn-delete svg {
-    width: 18px;
-    height: 18px;
-    fill: white;
+  button-bks {
+    margin-top: 0;
   }
 `;

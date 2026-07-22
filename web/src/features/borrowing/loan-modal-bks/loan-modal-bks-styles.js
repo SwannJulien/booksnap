@@ -75,33 +75,7 @@ export const loanModalBksStyles = css`
     margin-top: 2rem;
   }
 
-  .btn-yes,
-  .btn-no {
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius-default);
-    font-size: 1rem;
-    cursor: pointer;
-    min-width: 100px;
-  }
-
-  .btn-yes {
-    background-color: var(--clr-accent);
-    color: var(--clr-nav-dark);
-    font-weight: 700;
-  }
-
-  .btn-yes:hover {
-    filter: brightness(1.1);
-  }
-
-  .btn-no {
-    background-color: var(--clr-text-muted);
-    color: var(--clr-nav-dark);
-    font-weight: 700;
-  }
-
-  .btn-no:hover {
-    filter: brightness(1.1);
+  button-bks {
+    margin-top: 0;
   }
 `;

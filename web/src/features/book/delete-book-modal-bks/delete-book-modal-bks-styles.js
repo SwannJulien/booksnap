@@ -42,41 +42,7 @@ export const deleteBookModalBksStyles = css`
     margin-top: 2rem;
   }
 
-  .btn-cancel,
-  .btn-delete {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius-default);
-    font-size: 1rem;
-    cursor: pointer;
-    min-width: 140px;
-  }
-
-  .btn-cancel {
-    background-color: #382626;
-    color: var(--clr-text-light);
-  }
-
-  .btn-cancel:hover {
-    background-color: #2b1d1d;
-  }
-
-  .btn-delete {
-    background-color: #e31b1b;
-    color: white;
-  }
-
-  .btn-delete:hover {
-    background-color: #ff0f0f;
-  }
-
-  .btn-delete svg {
-    width: 18px;
-    height: 18px;
-    fill: white;
+  button-bks {
+    margin-top: 0;
   }
 `;

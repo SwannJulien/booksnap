@@ -36,7 +36,7 @@ export const copySectionModalBksStyles = css`
   .update-section-form-group label {
     color: var(--clr-text-light);
     font-weight: 500;
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
   }
 
   .update-section-form-group input {
@@ -68,37 +68,7 @@ export const copySectionModalBksStyles = css`
     margin-top: 2rem;
   }
 
-  .btn-cancel,
-  .btn-confirm {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius-default);
-    font-size: 1rem;
-    cursor: pointer;
-    min-width: 140px;
-  }
-
-  .btn-cancel {
-    background-color: var(--clr-text-muted);
-    color: var(--clr-nav-dark);
-    font-weight: 700;
-  }
-
-  .btn-cancel:hover {
-    filter: brightness(1.1);
-  }
-
-  .btn-confirm {
-    background-color: var(--clr-accent);
-    color: var(--clr-nav-dark);
-    font-weight: 700;
-  }
-
-  .btn-confirm:hover {
-    filter: brightness(1.1);
+  button-bks {
+    margin-top: 0;
   }
 `;

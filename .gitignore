@@ -59,4 +59,8 @@ storybook-static
 *.war
 *.zip
 
+# todo file
 todo.md
+
+# Claude config
+.claude
