@@ -1,0 +1,23 @@
+meta {
+  name: getAllHolds
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{vipa}}/api/v1/holds?page&size&q&status
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page:
+  size:
+  q:
+  status:
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

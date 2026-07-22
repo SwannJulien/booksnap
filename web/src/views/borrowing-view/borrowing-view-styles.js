@@ -29,11 +29,42 @@ export const borrowingView = [
       flex-wrap: wrap;
     }
 
+    .mode-switch {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      border: 1px solid var(--clr-border);
+      border-radius: var(--border-radius-default);
+      background-color: var(--clr-main-dark);
+    }
+
+    .mode-chip {
+      padding: 0.5rem 1.5rem;
+      border: none;
+      border-radius: calc(var(--border-radius-default) - 2px);
+      background: none;
+      color: var(--clr-text-muted);
+      font-family: 'Open Sans';
+      font-size: var(--step-0);
+      cursor: pointer;
+    }
+
+    .mode-chip:hover {
+      color: var(--clr-text-light);
+    }
+
+    .mode-chip.active {
+      background-color: var(--clr-accent);
+      color: var(--clr-nav-dark);
+      font-weight: 600;
+    }
+
     .quick-filters {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       flex-wrap: wrap;
+      margin-top: 1rem;
     }
 
     .quick-filters-label {
@@ -239,6 +270,20 @@ export const borrowingView = [
       background-color: rgba(255, 76, 76, 0.15);
       color: var(--clr-warning);
       border: 1px solid var(--clr-warning);
+    }
+
+    /* A copy is set aside and the clock is ticking: amber, not the "all good" green */
+    .status-ready {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+    }
+
+    /* Queued with no copy yet — nothing for the desk to act on */
+    .status-waiting {
+      background-color: rgba(156, 163, 175, 0.15);
+      color: var(--clr-text-muted);
+      border: 1px solid var(--clr-border);
     }
 
     .action-menu-wrapper {

@@ -1,14 +1,17 @@
 package net.booksnap.domain.hold.service;
 
 import lombok.extern.slf4j.Slf4j;
+import net.booksnap.domain.author.Author;
 import net.booksnap.domain.book.Book;
 import net.booksnap.domain.book.repository.BookRepository;
+import net.booksnap.domain.common.dto.PagedResponse;
 import net.booksnap.domain.copy.Copy;
 import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.hold.Hold;
 import net.booksnap.domain.hold.Status;
 import net.booksnap.domain.hold.api.dto.CreateHoldRequest;
 import net.booksnap.domain.hold.api.dto.CreateHoldResponse;
+import net.booksnap.domain.hold.api.dto.HoldResponse;
 import net.booksnap.domain.hold.repository.HoldRepository;
 import net.booksnap.domain.library.Library;
 import net.booksnap.domain.user.User;
@@ -18,10 +21,12 @@ import net.booksnap.exception.common.BadRequestException;
 import net.booksnap.exception.hold.BookHasAvailableCopyException;
 import net.booksnap.exception.hold.HoldAlreadyExistsException;
 import net.booksnap.exception.user.UserNotFoundException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -99,5 +104,48 @@ public class HoldServiceImpl implements HoldService {
                 savedHold.getEndDate(),
                 queuePosition
         );
+    }
+
+    /**
+     * Lists the holds that are still going somewhere. Fulfilled holds became loans and
+     * expired ones lapsed, so like the loans list, both are left out unless asked for
+     * by status.
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<HoldResponse> getHolds(String q, Status status, Pageable pageable) {
+        List<Status> statuses = status != null
+                ? List.of(status)
+                : List.of(Status.pending, Status.active);
+        String query = q == null ? "" : q.trim();
+
+        return PagedResponse.of(holdRepository
+                .findByStatusInAndUserMatching(statuses, query, pageable)
+                .map(HoldServiceImpl::toHoldResponse));
+    }
+
+    private static HoldResponse toHoldResponse(Hold hold) {
+        Book book = hold.getBook();
+        User user = hold.getUser();
+
+        return new HoldResponse(
+                hold.getId(),
+                hold.getStatus(),
+                hold.getCreatedDate(),
+                hold.getStartDate(),
+                hold.getEndDate(),
+                hold.getCopy() != null ? hold.getCopy().getId() : null,
+                new HoldResponse.BookDetails(
+                        book.getId(),
+                        book.getTitle(),
+                        book.getIsbn10(),
+                        book.getIsbn13(),
+                        book.getAuthors().stream()
+                                .map(Author::getName)
+                                .collect(Collectors.toSet())),
+                new HoldResponse.UserDetails(
+                        user.getId(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getEmail()));
     }
 }
