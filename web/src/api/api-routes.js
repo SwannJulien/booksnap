@@ -10,5 +10,6 @@ export const API_ROUTES = {
   COPIES: '/api/v1/copies',
   DEWEY: '/api/v1/dewey',
   GENRES: '/api/v1/genres',
+  HOLDS: '/api/v1/holds',
   USERS: '/api/v1/users',
 };

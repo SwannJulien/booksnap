@@ -18,6 +18,7 @@ import '../../features/copy/copy-section-modal-bks/copy-section-modal-bks.js';
 import '../../features/copy/delete-copy-modal-bks/delete-copy-modal-bks.js';
 import '../../features/book/create-book-bks/create-book-bks.js';
 import '../../features/borrowing/loan-modal-bks/loan-modal-bks.js';
+import '../../features/hold/hold-modal-bks/hold-modal-bks.js';
 
 export class CatalogView extends LitElement {
   static styles = [catalogView, sharedStyles];
@@ -31,6 +32,7 @@ export class CatalogView extends LitElement {
     copyToUpdate: { type: Object, state: true },
     copyToDelete: { type: Object, state: true },
     copyToBorrow: { type: Object, state: true },
+    bookToHold: { type: Object, state: true },
     showCreateModal: { type: Boolean, state: true },
   };
 
@@ -50,6 +52,7 @@ export class CatalogView extends LitElement {
     this.copyToUpdate = null;
     this.copyToDelete = null;
     this.copyToBorrow = null;
+    this.bookToHold = null;
     this.showCreateModal = false;
   }
 
@@ -67,7 +70,7 @@ export class CatalogView extends LitElement {
       ${this._headerTpl} ${this._searchbarTpl} ${this._tableTpl}
       ${this._deleteModalTpl} ${this._updateModalTpl} ${this._createModalTpl}
       ${this._createBookBksTpl} ${this._qrModalTpl} ${this._updateCopyModalTpl}
-      ${this._deleteCopyModalTpl} ${this._loanModalTpl}
+      ${this._deleteCopyModalTpl} ${this._loanModalTpl} ${this._holdModalTpl}
     `;
   }
 
@@ -206,6 +209,9 @@ export class CatalogView extends LitElement {
         break;
       case 'borrow-book':
         this._handleBorrowBook(data);
+        break;
+      case 'hold-book':
+        this._handleHoldBook(data);
         break;
       default:
         break;
@@ -465,6 +471,28 @@ export class CatalogView extends LitElement {
   // The loan was refused because the copy was taken in the meantime
   _handleCopyUnavailable() {
     this._refreshCopiesOf(this.copyToBorrow?.bookId);
+  }
+
+  get _holdModalTpl() {
+    return html`
+      <hold-modal-bks
+        ?open=${!!this.bookToHold}
+        .bookId=${this.bookToHold?.bookId}
+        .bookTitle=${this.bookToHold?.bookTitle}
+        @modal-close=${this._handleHoldModalClose}
+      ></hold-modal-bks>
+    `;
+  }
+
+  _handleHoldBook(copy) {
+    this.bookToHold = {
+      bookId: copy.bookId,
+      bookTitle: copy.bookTitle,
+    };
+  }
+
+  _handleHoldModalClose() {
+    this.bookToHold = null;
   }
 
   _refreshCopiesOf(bookId) {

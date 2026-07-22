@@ -18,4 +18,10 @@ public interface HoldRepository extends JpaRepository<Hold, Long> {
 
     // Pending holds that waited too long without ever getting a copy
     List<Hold> findByStatusAndCreatedDateBefore(Status status, LocalDateTime cutoff);
+
+    // A user may only queue once per book (mirrors the uq_hold_one_active_per_user_book index)
+    boolean existsByUserIdAndBookIdAndStatusIn(Long userId, Long bookId, List<Status> statuses);
+
+    // Size of the pending queue for a book, used to report a new hold's position
+    long countByBookIdAndStatus(Long bookId, Status status);
 }

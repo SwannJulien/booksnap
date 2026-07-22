@@ -10,6 +10,8 @@ import net.booksnap.exception.copy.CopyNotAvailableException;
 import net.booksnap.exception.copy.CopyNotFoundException;
 import net.booksnap.exception.dewey.DeweyCodeNotFoundException;
 import net.booksnap.exception.dewey.FictionBookHasDeweyCodeException;
+import net.booksnap.exception.hold.BookHasAvailableCopyException;
+import net.booksnap.exception.hold.HoldAlreadyExistsException;
 import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -115,6 +117,28 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CopyNotAvailableException.class)
     public ResponseEntity<ApiError> handleCopyNotAvailable(CopyNotAvailableException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(HoldAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleHoldAlreadyExists(HoldAlreadyExistsException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BookHasAvailableCopyException.class)
+    public ResponseEntity<ApiError> handleBookHasAvailableCopy(BookHasAvailableCopyException ex, HttpServletRequest request) {
         ApiError error = new ApiError(
                 LocalDateTime.now(),
                 HttpStatus.CONFLICT.value(),

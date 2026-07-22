@@ -102,8 +102,8 @@ export class CopyTableBks extends LitElement {
                             <dropdown-bks
                               .options=${this._getDropdownOptions(copy)}
                               @dropdown-selected-option=${
-                              this._handleDropdownAction
-                            }
+                                this._handleDropdownAction
+                              }
                             ></dropdown-bks>
                           `
                         : ''
@@ -144,6 +144,11 @@ export class CopyTableBks extends LitElement {
     // Delete copy: IF last copy THEN open modal saying this is the last copy, by deleting it you would remove the book from the library
     // Print QR Code
     const data = { ...copy, bookId: this.bookId, bookTitle: this.bookTitle };
+    // A book can only be held once it is fully out: an available copy is meant to be
+    // borrowed, so the "Hold a book" entry is hidden while any copy is available.
+    const bookHasAvailableCopy = this.copies?.some(
+      c => c.status?.toLowerCase() === 'available',
+    );
     return [
       // Only an available copy can be lent, so the entry is hidden otherwise
       ...(copy.status?.toLowerCase() === 'available'
@@ -153,6 +158,18 @@ export class CopyTableBks extends LitElement {
               data,
               path: 'M300-80q-58 0-99-41t-41-99v-520q0-58 41-99t99-41h500v600q-25 0-42.5 17.5T740-220q0 25 17.5 42.5T800-160v80H300Zm-60-267q14-7 29-10t31-3h20v-440h-20q-25 0-42.5 17.5T240-740v393Zm160-13h320v-440H400v440Zm-160 13v-453 453Zm60 187h373q-6-14-9.5-28.5T660-220q0-16 3-31t10-29H300q-26 0-43 17.5T240-220q0 26 17 43t43 17Z',
               label: 'Borrow book',
+              class: '',
+            },
+          ]
+        : []),
+      // A hold is only offered when no copy is available; it is queued until a copy frees up
+      ...(!bookHasAvailableCopy
+        ? [
+            {
+              action: 'hold-book',
+              data,
+              path: 'M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Z',
+              label: 'Hold a book',
               class: '',
             },
           ]
