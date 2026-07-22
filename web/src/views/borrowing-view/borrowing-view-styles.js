@@ -107,24 +107,29 @@ export const borrowingView = [
 
     th:nth-child(1),
     td:nth-child(1) {
-      width: 30%;
+      width: 28%;
     }
 
     th:nth-child(2),
     td:nth-child(2) {
-      width: 25%;
+      width: 22%;
     }
 
     th:nth-child(3),
     td:nth-child(3),
     th:nth-child(4),
     td:nth-child(4) {
-      width: 15%;
+      width: 14%;
     }
 
     th:nth-child(5),
     td:nth-child(5) {
       width: 15%;
+    }
+
+    th:nth-child(6),
+    td:nth-child(6) {
+      width: 7%;
     }
 
     td:nth-child(3),
@@ -234,6 +239,35 @@ export const borrowingView = [
       background-color: rgba(255, 76, 76, 0.15);
       color: var(--clr-warning);
       border: 1px solid var(--clr-warning);
+    }
+
+    .action-menu-wrapper {
+      position: relative;
+    }
+
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.25rem;
+      transition: all 0.3s ease;
+    }
+
+    .action-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--clr-text-muted);
+    }
+
+    .action-btn:hover svg {
+      fill: var(--clr-text-light);
+    }
+
+    .action-btn.active svg {
+      fill: var(--clr-accent);
     }
 
     .empty-state {

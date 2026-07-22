@@ -7,9 +7,14 @@ import { getBorrowings } from '../../api/borrowing.js';
 import { CoverController } from '../../controllers/cover-controller.js';
 import '../../components/button-bks/button-bks.js';
 import '../../components/spinner-bks/spinner-bks.js';
+import '../../components/dropdown-bks/dropdown-bks.js';
+import '../../features/borrowing/return-modal-bks/return-modal-bks.js';
 
 const MIN_QUERY_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 300;
+
+const RETURN_ICON_PATH =
+  'M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z';
 
 const QUICK_FILTERS = [
   { label: 'All Loans', status: '' },
@@ -72,6 +77,8 @@ export class BorrowingView extends LitElement {
     _query: { type: String, state: true },
     _committedQuery: { type: String, state: true },
     _status: { type: String, state: true },
+    _openActionMenuId: { state: true },
+    _borrowingToReturn: { type: Object, state: true },
   };
 
   _covers = new CoverController(this);
@@ -83,11 +90,20 @@ export class BorrowingView extends LitElement {
     this._query = '';
     this._committedQuery = '';
     this._status = '';
+    this._openActionMenuId = null;
+    this._borrowingToReturn = null;
     this._debounceTimer = null;
+    this._handleOutsideClick = this._handleOutsideClick.bind(this);
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('click', this._handleOutsideClick);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    document.removeEventListener('click', this._handleOutsideClick);
     if (this._debounceTimer) {
       clearTimeout(this._debounceTimer);
     }
@@ -110,6 +126,20 @@ export class BorrowingView extends LitElement {
         complete: borrowings => this._tableTpl(borrowings),
         error: err => html`<p>Error loading borrowings: ${err.message}</p>`,
       })}
+      ${this._returnModalTpl}
+    `;
+  }
+
+  get _returnModalTpl() {
+    return html`
+      <return-modal-bks
+        ?open=${!!this._borrowingToReturn}
+        .borrowingId=${this._borrowingToReturn?.id}
+        .bookTitle=${this._borrowingToReturn?.bookTitle ?? ''}
+        .studentName=${this._borrowingToReturn?.studentName ?? ''}
+        @modal-close=${this._handleReturnModalClose}
+        @borrowing-returned=${this._handleBorrowingReturned}
+      ></return-modal-bks>
     `;
   }
 
@@ -152,6 +182,7 @@ export class BorrowingView extends LitElement {
             <th>Borrow Date</th>
             <th>Due Date</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -159,13 +190,13 @@ export class BorrowingView extends LitElement {
             borrowings.data.length
               ? borrowings.data.map(borrowing => this._rowTpl(borrowing))
               : html`<tr>
-                  <td colspan="5" class="empty-state">No borrowings found</td>
+                  <td colspan="6" class="empty-state">No borrowings found</td>
                 </tr>`
           }
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="5">
+            <td colspan="6">
               <div class="footer-content">
                 <span>${paginationText(borrowings.page)}</span>
                 <div class="footer-btn-container">
@@ -233,7 +264,46 @@ export class BorrowingView extends LitElement {
               : html`<span class="status-pill status-on-time">On-time</span>`
           }
         </td>
+        <td>${this._actionsTpl(borrowing)}</td>
       </tr>
+    `;
+  }
+
+  _actionsTpl(borrowing) {
+    const isMenuOpen = this._openActionMenuId === borrowing.id;
+
+    return html`
+      <div class="action-menu-wrapper">
+        <button
+          class="action-btn ${isMenuOpen ? 'active' : ''}"
+          aria-label="More actions"
+          @click=${() => this._handleToggleActionMenu(borrowing.id)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path
+              d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"
+            />
+          </svg>
+        </button>
+        ${
+          isMenuOpen
+            ? html`
+                <dropdown-bks
+                  .options=${[
+                    {
+                      action: 'return-book',
+                      data: borrowing,
+                      path: RETURN_ICON_PATH,
+                      label: 'Return',
+                      class: '',
+                    },
+                  ]}
+                  @dropdown-selected-option=${this._handleDropdownAction}
+                ></dropdown-bks>
+              `
+            : ''
+        }
+      </div>
     `;
   }
 
@@ -244,6 +314,52 @@ export class BorrowingView extends LitElement {
     return coverUrl
       ? html`<img class="book-cover" src=${coverUrl} alt="${book.title}" />`
       : html`<div class="cover-placeholder">No cover</div>`;
+  }
+
+  _handleToggleActionMenu(borrowingId) {
+    this._openActionMenuId =
+      this._openActionMenuId === borrowingId ? null : borrowingId;
+  }
+
+  _handleOutsideClick(e) {
+    if (!this._openActionMenuId) return;
+    const clickedOnMenu = e
+      .composedPath()
+      .some(
+        el =>
+          el.classList?.contains('action-dropdown') ||
+          el.classList?.contains('action-btn'),
+      );
+    if (!clickedOnMenu) {
+      this._openActionMenuId = null;
+    }
+  }
+
+  _handleDropdownAction(e) {
+    const { action, data } = e.detail;
+    this._openActionMenuId = null;
+
+    if (action === 'return-book') {
+      this._handleReturnBook(data);
+    }
+  }
+
+  _handleReturnBook(borrowing) {
+    const { book, user } = borrowing;
+    this._borrowingToReturn = {
+      id: borrowing.id,
+      bookTitle: book.title,
+      studentName: `${user.firstName} ${user.lastName}`,
+    };
+  }
+
+  _handleReturnModalClose() {
+    this._borrowingToReturn = null;
+  }
+
+  // The loan leaves the active list once returned, so the page has to be refetched
+  _handleBorrowingReturned() {
+    this.borrowingsTask.run();
   }
 
   _handleFilterChange(status) {

@@ -46,6 +46,28 @@ export async function getBorrowings({
   return response.json();
 }
 
+// Marks a borrowing as returned. The copy status follows on the server: back to
+// available, or on_hold when the copy is handed to the next student in the queue.
+// Returns { id, copyId, userId, status, returnedOn, copyStatus, promotedHoldId }.
+export async function returnBorrowing(borrowingId) {
+  const response = await fetch(
+    `${API_BASE_URL}${API_ROUTES.BORROWINGS}/${borrowingId}/return`,
+    { method: 'POST' },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const error = new Error(
+      errorData.message || `Failed to return borrowing: ${response.status}`,
+    );
+    // 409 means the book was already returned, e.g. by another librarian
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
 export async function createBorrowing(copyId, userId) {
   const response = await fetch(`${API_BASE_URL}${API_ROUTES.BORROWINGS}`, {
     method: 'POST',
