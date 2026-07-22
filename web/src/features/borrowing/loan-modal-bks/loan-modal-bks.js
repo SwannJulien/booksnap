@@ -8,6 +8,17 @@ import '../../../components/button-bks/button-bks.js';
 const MIN_QUERY_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 300;
 
+// LocalDate string ("2023-10-12") to a readable date, avoiding UTC parsing shifts.
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  });
+}
+
 export class LoanModalBks extends LitElement {
   static styles = [loanModalBksStyles];
 
@@ -19,6 +30,9 @@ export class LoanModalBks extends LitElement {
     // modal opens straight on the explanation instead of offering a loan
     unavailable: { type: Boolean },
     copyStatus: { type: String },
+    // The student this copy is being kept for, when it is on hold. Present means the
+    // modal skips the search: only they may collect it, and the loan fulfils the hold.
+    hold: { type: Object },
     _step: { type: String, state: true },
     _query: { type: String, state: true },
     _students: { type: Array, state: true },
@@ -36,6 +50,7 @@ export class LoanModalBks extends LitElement {
     this.bookTitle = '';
     this.unavailable = false;
     this.copyStatus = '';
+    this.hold = null;
     this._debounceTimer = null;
     this._resetState();
   }
@@ -54,10 +69,22 @@ export class LoanModalBks extends LitElement {
   }
 
   _resetState() {
-    this._step = this.unavailable ? 'unavailable' : 'offer';
+    if (this.hold) {
+      this._step = 'pickup';
+    } else {
+      this._step = this.unavailable ? 'unavailable' : 'offer';
+    }
     this._query = '';
     this._students = null;
-    this._selectedStudent = null;
+    // A hold names its student, and nobody else can be handed the copy, so it stands
+    // in for the search selection
+    this._selectedStudent = this.hold
+      ? {
+          id: this.hold.userId,
+          firstName: this.hold.firstName,
+          lastName: this.hold.lastName,
+        }
+      : null;
     this._error = '';
     this._conflict = false;
   }
@@ -72,6 +99,8 @@ export class LoanModalBks extends LitElement {
 
   get _stepTpl() {
     switch (this._step) {
+      case 'pickup':
+        return this._pickupTpl;
       case 'search':
         return this._searchTpl;
       case 'confirm':
@@ -97,6 +126,41 @@ export class LoanModalBks extends LitElement {
           <button-bks
             label="Yes"
             @button-click=${this._handleOfferYes}
+          ></button-bks>
+          <button-bks
+            variant="secondary"
+            label="No"
+            @button-click=${this._handleClose}
+          ></button-bks>
+        </div>
+      </div>
+    `;
+  }
+
+  // The copy was set aside for one student: confirming the handover turns their hold
+  // into the loan, so there is nobody to search for.
+  get _pickupTpl() {
+    const { firstName, lastName } = this.hold ?? {};
+
+    return html`
+      <div class="loan-modal-content">
+        <h2>
+          <span class="book-title-highlight">${this.bookTitle}</span>
+          is on hold for ${firstName} ${lastName}.
+        </h2>
+        ${
+          this.hold?.endDate
+            ? html`<p class="pickup-detail">
+                To be collected before ${formatDate(this.hold.endDate)}.
+              </p>`
+            : ''
+        }
+        <h2>Hand it over now?</h2>
+        ${this._error ? html`<p class="error">${this._error}</p>` : ''}
+        <div class="button-container">
+          <button-bks
+            label="Yes"
+            @button-click=${this._handleConfirmYes}
           ></button-bks>
           <button-bks
             variant="secondary"
@@ -223,6 +287,12 @@ export class LoanModalBks extends LitElement {
   }
 
   get _unavailableReason() {
+    // The handover was refused: the hold is gone, since the student it named is the
+    // one person the server would have accepted
+    if (this._conflict && this.hold) {
+      return `This copy is no longer held for ${this.hold.firstName} ${this.hold.lastName}. The pickup window may have passed, or the hold was collected already.`;
+    }
+
     const status = this._conflict ? 'borrowed' : this.copyStatus?.toLowerCase();
 
     if (!status || status === 'borrowed') {

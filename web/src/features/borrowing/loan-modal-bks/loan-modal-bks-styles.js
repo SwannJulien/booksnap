@@ -63,7 +63,8 @@ export const loanModalBksStyles = css`
     color: var(--clr-warning);
   }
 
-  .unavailable-detail {
+  .unavailable-detail,
+  .pickup-detail {
     margin: 0;
     color: var(--clr-text-muted);
   }

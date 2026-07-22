@@ -208,6 +208,7 @@ export class CatalogView extends LitElement {
         this._handleDeleteCopy(data);
         break;
       case 'borrow-book':
+      case 'hand-over-hold':
         this._handleBorrowBook(data);
         break;
       case 'hold-book':
@@ -427,6 +428,7 @@ export class CatalogView extends LitElement {
         .bookTitle=${this.copyToBorrow?.bookTitle}
         .unavailable=${!!this.copyToBorrow?.unavailable}
         .copyStatus=${this.copyToBorrow?.copyStatus ?? ''}
+        .hold=${this.copyToBorrow?.hold ?? null}
         @modal-close=${this._handleLoanModalClose}
         @loan-created=${this._handleLoanCreated}
         @copy-unavailable=${this._handleCopyUnavailable}
@@ -435,23 +437,27 @@ export class CatalogView extends LitElement {
   }
 
   // Same flow as scanning the copy's QR code, minus the scan: the copy id is
-  // already known, so go straight to confirming the copy is still available.
+  // already known, so go straight to confirming the copy can still be lent.
   async _handleBorrowBook(copy) {
     try {
       const result = await getBorrowingByCopyId(copy.id);
-      const isAvailable = result?.copyStatus === 'available';
+      // Either the copy is free, or it is set aside for a student who is here to
+      // collect it — that loan fulfills their hold
+      const hold = result?.copyStatus === 'on_hold' ? result.hold : null;
+      const canLend = result?.copyStatus === 'available' || !!hold;
 
       this.copyToBorrow = {
         copyId: String(copy.id),
         bookTitle: result?.bookTitle ?? copy.bookTitle,
         bookId: copy.bookId,
+        hold,
         // The table can be out of date: another librarian may have lent this
         // copy since the row was rendered
-        unavailable: !isAvailable,
+        unavailable: !canLend,
         copyStatus: result?.copyStatus,
       };
 
-      if (!isAvailable) {
+      if (!canLend) {
         this._refreshCopiesOf(copy.bookId);
       }
     } catch (err) {

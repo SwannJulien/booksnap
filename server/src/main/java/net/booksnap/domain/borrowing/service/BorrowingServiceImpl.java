@@ -184,6 +184,8 @@ public class BorrowingServiceImpl implements BorrowingService {
                 .orElse(null);
     }
 
+    // Read-only transaction: the copy status and the hold read against it have to agree
+    @Transactional(readOnly = true)
     public GetBorrowingResponse getActiveBorrowingByCopyId(Long copyId) {
         Copy copy = copyRepository.findById(copyId)
                 .orElseThrow(() -> new CopyNotFoundException(copyId));
@@ -200,7 +202,33 @@ public class BorrowingServiceImpl implements BorrowingService {
                 ))
                 .orElse(null);
 
-        return new GetBorrowingResponse(copy.getStatus(), copy.getBook().getTitle(), borrowingDetails);
+        return new GetBorrowingResponse(
+                copy.getStatus(),
+                copy.getBook().getTitle(),
+                borrowingDetails,
+                activeHoldDetails(copy));
+    }
+
+    /**
+     * The hold this copy is being kept for, so the desk knows who may collect it.
+     * Null unless the copy is actually on hold.
+     */
+    private GetBorrowingResponse.HoldDetails activeHoldDetails(Copy copy) {
+        if (copy.getStatus() != net.booksnap.domain.copy.Status.on_hold) {
+            return null;
+        }
+
+        return holdRepository
+                .findFirstByCopyIdAndStatus(copy.getId(), net.booksnap.domain.hold.Status.active)
+                .map(hold -> new GetBorrowingResponse.HoldDetails(
+                        hold.getId(),
+                        hold.getUser().getId(),
+                        hold.getUser().getFirstName(),
+                        hold.getUser().getLastName(),
+                        hold.getStartDate(),
+                        hold.getEndDate()
+                ))
+                .orElse(null);
     }
 
     @Transactional(readOnly = true)

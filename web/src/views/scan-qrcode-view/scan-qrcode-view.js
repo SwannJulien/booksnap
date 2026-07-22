@@ -20,14 +20,14 @@ export class ScanQrcodeView extends LitElement {
   static properties = {
     _scannedCode: { type: String, state: true },
     _copyId: { type: String, state: true },
-    _availableCopy: { type: Object, state: true },
+    _scannedCopy: { type: Object, state: true },
   };
 
   constructor() {
     super();
     this._scannedCode = null;
     this._copyId = null;
-    this._availableCopy = null;
+    this._scannedCopy = null;
   }
 
   _handleScanResult(e) {
@@ -54,7 +54,15 @@ export class ScanQrcodeView extends LitElement {
           result.borrowing,
         );
       } else if (result.copyStatus === 'available') {
-        this._availableCopy = { copyId, bookTitle: result.bookTitle };
+        this._scannedCopy = { copyId, bookTitle: result.bookTitle };
+      } else if (result.copyStatus === 'on_hold' && result.hold) {
+        // Set aside for one student: scanning it at the desk is them collecting it,
+        // which turns the hold into a loan
+        this._scannedCopy = {
+          copyId,
+          bookTitle: result.bookTitle,
+          hold: result.hold,
+        };
       } else {
         console.log(
           `Copy ${copyId} is not borrowed (status: ${result.copyStatus})`,
@@ -66,7 +74,7 @@ export class ScanQrcodeView extends LitElement {
   }
 
   _handleLoanModalClose() {
-    this._availableCopy = null;
+    this._scannedCopy = null;
   }
 
   render() {
@@ -76,9 +84,10 @@ export class ScanQrcodeView extends LitElement {
         @sendBarecode=${this._handleScanResult}
       ></barcode-scanner-bks>
       <loan-modal-bks
-        ?open=${!!this._availableCopy}
-        .copyId=${this._availableCopy?.copyId}
-        .bookTitle=${this._availableCopy?.bookTitle}
+        ?open=${!!this._scannedCopy}
+        .copyId=${this._scannedCopy?.copyId}
+        .bookTitle=${this._scannedCopy?.bookTitle}
+        .hold=${this._scannedCopy?.hold ?? null}
         @modal-close=${this._handleLoanModalClose}
       ></loan-modal-bks>
     `;

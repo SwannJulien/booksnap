@@ -162,6 +162,19 @@ export class CopyTableBks extends LitElement {
             },
           ]
         : []),
+      // A copy kept on hold can only go to the student it was set aside for, and that
+      // loan is what fulfills their hold
+      ...(copy.status?.toLowerCase() === 'on_hold'
+        ? [
+            {
+              action: 'hand-over-hold',
+              data,
+              path: 'M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Zm190 520 226-226-56-58-170 170-86-84-56 56 142 142Z',
+              label: 'Hand over hold',
+              class: '',
+            },
+          ]
+        : []),
       // A hold is only offered when no copy is available; it is queued until a copy frees up
       ...(!bookHasAvailableCopy
         ? [
