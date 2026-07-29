@@ -26,6 +26,14 @@
   --font-title: "Montserrat";
 }
 
+/*
+ * Breakpoints (rem, so they follow the user's browser font size like the
+ * type scale above does). Custom properties can't be used in a media query
+ * condition, so these values have to be typed literally in each @media:
+ *   mobile  48rem  (768px at the 16px default)
+ *   tablet  75rem  (1200px at the 16px default)
+ */
+
 html,
 body {
   margin: 0;
@@ -38,5 +46,7 @@ body {
 }
 
 body {
+  /* No breakpoint override: --step-0 already scales fluidly from 320px to
+     1440px, so stepping it down at 48rem would only add a jump. */
   font-size: var(--step-0);
 }

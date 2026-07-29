@@ -13,6 +13,16 @@ export const searchBarBksStyles = css`
     padding: 1.2rem;
     border-radius: var(--border-radius-default);
     align-items: center;
+
+     @media (max-width: 48rem) {
+      background-color: transparent;
+      padding: 0;
+      grid-template-columns: minmax(0, auto) minmax(0, auto) auto 1fr;
+
+      .searchbar-search {
+        grid-column: 1 / -1;
+     }
+    }
   }
 
   input,

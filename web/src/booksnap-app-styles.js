@@ -148,7 +148,7 @@ export const booksnapApp = [
       fill: var(--clr-text-light);
     }
 
-    @media (max-width: 48rem) {
+    @media (max-width: 75rem) {
       :host {
         grid-template-columns: 1fr;
         padding-right: 0;

@@ -19,6 +19,35 @@ export const catalogView = [
       justify-content: space-between;
     }
 
+    @media (max-width: 48rem) {
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        column-gap: 1rem;
+        row-gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .header-title {
+        display: contents;
+      }
+
+      .header h1 {
+        grid-area: 1 / 1;
+      }
+
+      .header button-bks {
+        grid-area: 1 / 2;
+        justify-self: end;
+      }
+
+      .header p {
+        grid-area: 2 / 1 / 2 / -1;
+        margin: 0;
+      }
+    }
+
     .searchbar-container {
       display: flex;
       gap: 1rem;

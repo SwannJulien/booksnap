@@ -132,7 +132,7 @@ export class CatalogView extends LitElement {
           <p>Manage and browse the entire book collection</p>
         </div>
         <button-bks
-          label="Add new Book"
+          label="New Book"
           icon="add"
           @click=${this._handleOpenCreateModal}
         ></button-bks>
