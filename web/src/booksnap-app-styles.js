@@ -18,7 +18,7 @@ export const booksnapApp = [
       min-height: 100vh;
     }
 
-    #sidebar {
+    nav {
       box-sizing: border-box;
       height: 100%;
       padding-top: 20px;
@@ -35,7 +35,7 @@ export const booksnapApp = [
       text-wrap: nowrap;
     }
 
-    #sidebar.close {
+    nav.close {
       width: 60px;
       padding: 2px;
 
@@ -51,12 +51,12 @@ export const booksnapApp = [
       ul {
         margin: 1rem 0 0;
       }
-      #toggle-btn {
+      .toggle-btn {
         padding-right: 0.9rem;
       }
     }
 
-    #sidebar ul {
+    nav ul {
       list-style: none;
       padding: 0;
       display: flex;
@@ -65,14 +65,14 @@ export const booksnapApp = [
       margin: 0 1rem;
     }
 
-    #sidebar ul > li:first-child {
+    nav ul > li:first-child {
       display: flex;
       justify-content: flex-end;
       align-items: center;
       margin-bottom: 16px;
     }
 
-    #sidebar ul li.divider {
+    nav ul li.divider {
       margin-top: 2rem;
       margin-bottom: 1rem;
       padding: 0 1rem;
@@ -80,11 +80,11 @@ export const booksnapApp = [
       background-color: var(--clr-border, #4a5568);
     }
 
-    #sidebar ul li a {
+    nav ul li a {
       border-inline-start: 4px solid transparent;
     }
 
-    #sidebar ul li.active a {
+    nav ul li.active a {
       border-inline-start: 4px solid var(--clr-accent);
       color: var(--clr-text-light);
       background-color: var(--clr-card-gray);
@@ -96,14 +96,14 @@ export const booksnapApp = [
       }
     }
 
-    #sidebar svg {
+    nav svg {
       width: 30px;
       height: 30px;
       flex-shrink: 0;
       fill: var(--clr-text-muted);
     }
 
-    #sidebar a {
+    nav a {
       padding: 0.85em;
       text-decoration: none;
       color: var(--clr-text-muted);
@@ -121,7 +121,7 @@ export const booksnapApp = [
       color: var(--clr-accent);
     }
 
-    #sidebar a:hover {
+    nav a:hover {
       color: var(--clr-text-light);
 
       svg {
@@ -129,7 +129,7 @@ export const booksnapApp = [
       }
     }
 
-    #toggle-btn {
+    .toggle-btn {
       margin-left: auto;
       padding-right: 1em;
       border: none;
@@ -139,12 +139,12 @@ export const booksnapApp = [
       align-items: center;
     }
 
-    #toggle-btn svg {
+    .toggle-btn svg {
       width: 30px;
       height: 30px;
     }
 
-    #toggle-btn svg:hover {
+    .toggle-btn svg:hover {
       fill: var(--clr-text-light);
     }
 
@@ -157,7 +157,7 @@ export const booksnapApp = [
         padding: 2em 1em 60px 1em;
       }
 
-      #sidebar {
+      nav {
         height: 60px;
         width: 100%;
         border-right: none;
@@ -209,15 +209,21 @@ export const booksnapApp = [
           justify-content: center;
         }
       }
-      #sidebar ul li a {
+      nav ul li a {
         border-bottom: 4px solid transparent;
         transition: border-bottom 0.5s ease;
       }
-      #sidebar ul li.active a {
+      nav ul li.active a {
         border-left: none;
         border-bottom: 4px solid var(--clr-accent);
         border-radius: var(--border-radius-default) var(--border-radius-default)
           0 0;
+      }
+    }
+
+    @media print {
+      nav {
+        display: none !important;
       }
     }
   `,

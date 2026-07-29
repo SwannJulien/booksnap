@@ -2,9 +2,7 @@ import { Router } from '@vaadin/router';
 import { LitElement, html } from 'lit';
 
 import { booksnapApp } from './booksnap-app-styles.js';
-import './features/scanner/barcode-scanner-bks/barcode-scanner-bks.js';
 import './views/home-view/home-view.js';
-import './views/add-book-view/add-book-view.js';
 
 class BooksnapApp extends LitElement {
   static styles = [booksnapApp];
@@ -144,16 +142,27 @@ class BooksnapApp extends LitElement {
     ]);
   }
 
+  // Remove class .close when the nav becomes the bottom bar (< 48em)
+  _handleMobileChange = event => {
+    if (event.matches) {
+      this.shadowRoot?.querySelector('nav')?.classList.remove('close');
+    }
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._mobileQuery = window.matchMedia('(max-width: 48em)');
+    this._mobileQuery.addEventListener('change', this._handleMobileChange);
+  }
+
+  disconnectedCallback() {
+    this._mobileQuery.removeEventListener('change', this._handleMobileChange);
+    super.disconnectedCallback();
+  }
+
   toggleSidebar() {
-    const sidebar = this.shadowRoot.getElementById('sidebar');
-    // Toggle class .close if toggle-btn is pressed
-    sidebar.classList.toggle('close');
-    // Remove class .close if screen size < 48em
-    window.addEventListener('resize', () => {
-      if (window.matchMedia(`(max-width: 48em)`).matches) {
-        sidebar.classList.remove('close');
-      }
-    });
+    // Toggle class .close if the toggle button is pressed
+    this.shadowRoot.querySelector('nav').classList.toggle('close');
   }
 
   toggleActive(event) {
@@ -167,11 +176,11 @@ class BooksnapApp extends LitElement {
   // TODO: change icon and title: +1 Add book and maybe put the scanning icon for borrowings
   render() {
     return html`
-      <nav id="sidebar">
+      <nav>
         <ul>
           <li>
             <span class="logo">Booksnap</span>
-            <button id="toggle-btn" @click=${this.toggleSidebar}>
+            <button class="toggle-btn" @click=${this.toggleSidebar}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 height="24px"
@@ -290,7 +299,6 @@ class BooksnapApp extends LitElement {
                 <span>Account</span>
               </a>
             </li>
-          </div>
         </ul>
       </nav>
       <main></main>

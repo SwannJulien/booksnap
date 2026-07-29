@@ -91,6 +91,7 @@ export class ScanQrcodeView extends LitElement {
     return html`
       <barcode-scanner-bks
         autoStart
+        mode="qr"
         @sendBarecode=${this._handleScanResult}
       ></barcode-scanner-bks>
       <loan-modal-bks

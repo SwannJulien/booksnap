@@ -1,5 +1,4 @@
 import { LitElement, html } from 'lit';
-import '../../features/scanner/barcode-scanner-bks/barcode-scanner-bks.js';
 import '../../components/button-bks/button-bks.js';
 import '../../features/book/book-form-bks/book-form-bks.js';
 import '../../components/spinner-bks/spinner-bks.js';
@@ -18,6 +17,7 @@ export class AddBookView extends LitElement {
     isFetching: { type: Boolean },
     showBookForm: { type: Boolean },
     showNotFound: { type: Boolean },
+    _scannerLoaded: { type: Boolean, state: true },
   };
 
   constructor() {
@@ -28,6 +28,25 @@ export class AddBookView extends LitElement {
     this.isFetching = false;
     this.showBookForm = false;
     this.showNotFound = false;
+    this._scannerLoaded = false;
+  }
+
+  firstUpdated() {
+    if (this.activeTab === 'scan') {
+      this._loadScanner();
+    }
+  }
+
+  // The scanner pulls in the whole barcode library, so it is only fetched once
+  // the scan tab is shown. The promise is kept so it is imported only once.
+  async _loadScanner() {
+    if (!this._scannerImport) {
+      this._scannerImport = import(
+        '../../features/scanner/barcode-scanner-bks/barcode-scanner-bks.js'
+      );
+    }
+    await this._scannerImport;
+    this._scannerLoaded = true;
   }
 
   render() {
@@ -93,12 +112,7 @@ export class AddBookView extends LitElement {
 
       ${this.isFetching
         ? html`<spinner-bks></spinner-bks>`
-        : html`
-            <barcode-scanner-bks
-              ?hidden=${this.showBookForm}
-              @sendBarecode=${this._handleIsbnInput}
-            ></barcode-scanner-bks>
-          `}
+        : this._renderScanner()}
       ${this.showBookForm
         ? html`<book-form-bks
             .book=${this.book}
@@ -106,6 +120,20 @@ export class AddBookView extends LitElement {
             @cover-error=${this._handleCoverError}
           ></book-form-bks>`
         : ''}
+    `;
+  }
+
+  _renderScanner() {
+    if (!this._scannerLoaded) {
+      return html`<spinner-bks ?hidden=${this.showBookForm}></spinner-bks>`;
+    }
+
+    return html`
+      <barcode-scanner-bks
+        mode="barcode"
+        ?hidden=${this.showBookForm}
+        @sendBarecode=${this._handleIsbnInput}
+      ></barcode-scanner-bks>
     `;
   }
 
@@ -174,6 +202,10 @@ export class AddBookView extends LitElement {
 
     if (tabName !== 'form') {
       this.book = null;
+    }
+
+    if (tabName === 'scan') {
+      this._loadScanner();
     }
 
     await this.updateComplete;
