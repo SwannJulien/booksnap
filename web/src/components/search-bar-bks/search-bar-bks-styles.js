@@ -17,7 +17,7 @@ export const searchBarBksStyles = css`
      @media (max-width: 48rem) {
       background-color: transparent;
       padding: 0;
-      grid-template-columns: minmax(0, auto) minmax(0, auto) auto 1fr;
+      grid-template-columns: minmax(0, auto) minmax(0, auto) minmax(0, 1fr) 1fr;
 
       .searchbar-search {
         grid-column: 1 / -1;
@@ -42,6 +42,14 @@ export const searchBarBksStyles = css`
   input[name='search'] {
     background-image: url('../../../assets/search.svg');
     padding-left: 40px;
+    background-color: var(--clr-nav-dark);
+  }
+
+  input[name='genre'] {
+    @media (max-width: 48rem) {
+      background-color: var(--clr-nav-dark);
+      padding: 1rem;
+    }
   }
 
   select {
@@ -53,6 +61,9 @@ export const searchBarBksStyles = css`
     background-position: right 6px center;
     background-size: 26px;
     cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   button {
@@ -61,9 +72,13 @@ export const searchBarBksStyles = css`
     border-radius: var(--border-radius-default);
     padding: 0.5rem;
     height: 43px;
+
+    @media (max-width: 48rem) {
+      padding: 0.8rem;
+      height: 52px;
+    }
   }
 
-  /* Availability wrapper */
   .availability-wrapper {
     position: relative;
   }
@@ -83,7 +98,7 @@ export const searchBarBksStyles = css`
     line-height: 1;
   }
 
-  /* Genre autocomplete */
+
   .genre-autocomplete {
     position: relative;
   }

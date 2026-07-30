@@ -1,8 +1,9 @@
 import { LitElement, html } from 'lit';
 import { buttonBksStyles } from './button-bks-styles.js';
+import { sharedStyles } from '../../shared-styles.js';
 
 export class ButtonBks extends LitElement {
-  static styles = [buttonBksStyles];
+  static styles = [buttonBksStyles, sharedStyles];
 
   static formAssociated = true;
 

@@ -44,7 +44,7 @@ export const catalogView = [
 
       .header p {
         grid-area: 2 / 1 / 2 / -1;
-        margin: 0;
+        margin-top: 1rem;
       }
     }
 

@@ -22,6 +22,7 @@
   --clr-border: #4B5563; 
   
   --border-radius-default: 8px;
+  --border-radius-mobile: 12px;
 
   --font-title: "Montserrat";
 }
