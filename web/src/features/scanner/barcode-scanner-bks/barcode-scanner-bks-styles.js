@@ -4,12 +4,27 @@ import { sharedStyles } from '../../../shared-styles.js';
 export const barcodeScannerBksStyles = [
   sharedStyles,
   css`
+    :host {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    :host([hidden]) {
+      display: none;
+    }
+
     video {
       width: 100%;
-      max-width: 100%;
+      max-width: 40rem;
       height: auto;
       border: 2px solid #ccc;
       border-radius: var(--border-radius-default);
+    }
+
+    :host([autostart]) {
+      align-items: center;
     }
 
     button {
