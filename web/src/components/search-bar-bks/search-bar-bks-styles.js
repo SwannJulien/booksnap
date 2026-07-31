@@ -17,7 +17,7 @@ export const searchBarBksStyles = css`
      @media (max-width: 48rem) {
       background-color: transparent;
       padding: 0;
-      grid-template-columns: minmax(0, auto) minmax(0, auto) minmax(0, 1fr) 1fr;
+      grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
 
       .searchbar-search {
         grid-column: 1 / -1;
@@ -42,7 +42,10 @@ export const searchBarBksStyles = css`
   input[name='search'] {
     background-image: url('../../../assets/search.svg');
     padding-left: 40px;
-    background-color: var(--clr-nav-dark);
+
+    @media (max-width: 48rem) {
+      background-color: var(--clr-nav-dark);
+    }
   }
 
   input[name='genre'] {
