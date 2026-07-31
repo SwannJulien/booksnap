@@ -66,8 +66,6 @@ export class BookTableBks extends LitElement {
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
 
-  // Below the mobile breakpoint the table becomes a list of cards: the seven columns
-  // never fit a phone, and a horizontally scrolling table is worse than a card.
   _handleMobileChange = event => {
     this._isMobile = event.matches;
   };
@@ -75,7 +73,7 @@ export class BookTableBks extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this._handleOutsideClick);
-    this._mobileQuery = window.matchMedia('(max-width: 48rem)');
+    this._mobileQuery = window.matchMedia('(max-width: 56.25rem)');
     this._isMobile = this._mobileQuery.matches;
     this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }

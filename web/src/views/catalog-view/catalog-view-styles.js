@@ -19,7 +19,7 @@ export const catalogView = [
       justify-content: space-between;
     }
 
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       .header {
         display: grid;
         grid-template-columns: 1fr auto;

@@ -306,12 +306,6 @@ export const bookTableBksStyles = css`
   .expanded-content {
     padding: 0.5rem;
   }
-
-  /* ---------- Mobile card layout (< 48rem) ----------
-     Rendered instead of the table, not on top of it: see _isMobile in
-     book-table-bks.js. Selectors here are shared with the table where the
-     styling matches (cover, availability bar, action buttons). */
-
   .card-list {
     display: flex;
     flex-direction: column;
@@ -427,8 +421,6 @@ export const bookTableBksStyles = css`
     gap: 0.5rem;
   }
 
-  /* Always a filled circle on a card, unlike the table where only the expanded
-     state gets one — on mobile it is the card's main affordance. */
   .card-actions .expand-btn {
     background-color: var(--clr-main-dark);
     border-radius: 50%;

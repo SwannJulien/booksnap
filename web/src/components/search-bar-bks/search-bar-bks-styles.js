@@ -14,7 +14,7 @@ export const searchBarBksStyles = css`
     border-radius: var(--border-radius-default);
     align-items: center;
 
-     @media (max-width: 48rem) {
+     @media (max-width: 56.25rem) {
       background-color: transparent;
       padding: 0;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
@@ -43,13 +43,13 @@ export const searchBarBksStyles = css`
     background-image: url('../../../assets/search.svg');
     padding-left: 40px;
 
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       background-color: var(--clr-nav-dark);
     }
   }
 
   input[name='genre'] {
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       background-color: var(--clr-nav-dark);
       padding: 1rem;
     }
@@ -69,10 +69,6 @@ export const searchBarBksStyles = css`
     white-space: nowrap;
   }
 
-  /* Keeps the label clear of the arrow background image, which is painted over the
-     text and has no box of its own to push it away. Needs to out-specify the
-     'input, select { padding }' shorthand in sharedStyles, which is applied after
-     this sheet and would otherwise reset padding-right. */
   select[name='availability'] {
     padding-right: 36px;
   }
@@ -84,9 +80,10 @@ export const searchBarBksStyles = css`
     padding: 0.5rem;
     height: 43px;
 
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       padding: 0.8rem;
       height: 52px;
+      background-color: var(--clr-nav-dark);
     }
   }
 

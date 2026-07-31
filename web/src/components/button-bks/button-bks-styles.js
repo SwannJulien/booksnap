@@ -8,7 +8,7 @@ export const buttonBksStyles = [
       display: inline-block;
       margin-top: 1.5rem;
 
-      @media (max-width: 48rem) {
+      @media (max-width: 56.25rem) {
         margin-top: 0rem;
       }
     }

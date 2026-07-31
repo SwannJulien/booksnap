@@ -30,7 +30,6 @@ export class CopyTableBks extends LitElement {
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
 
-  // Mirrors book-table-bks: the four columns become a stack of copy cards on a phone.
   _handleMobileChange = event => {
     this._isMobile = event.matches;
   };
@@ -38,7 +37,7 @@ export class CopyTableBks extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this._handleOutsideClick);
-    this._mobileQuery = window.matchMedia('(max-width: 48rem)');
+    this._mobileQuery = window.matchMedia('(max-width: 56.25rem)');
     this._isMobile = this._mobileQuery.matches;
     this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }
@@ -199,13 +198,8 @@ export class CopyTableBks extends LitElement {
   }
 
   _getDropdownOptions(copy) {
-    // Update status of the copy: 'available', 'borrowed', 'on_hold', 'lost', 'damaged', 'removed'
-    // Update section name => show modal: "This action will generate a new QR code for this book, do you want to proceed?"
-    // Delete copy: IF last copy THEN open modal saying this is the last copy, by deleting it you would remove the book from the library
-    // Print QR Code
     const data = { ...copy, bookId: this.bookId, bookTitle: this.bookTitle };
-    // A book can only be held once it is fully out: an available copy is meant to be
-    // borrowed, so the "Hold a book" entry is hidden while any copy is available.
+    
     const bookHasAvailableCopy = this.copies?.some(
       c => c.status?.toLowerCase() === 'available',
     );
@@ -222,8 +216,6 @@ export class CopyTableBks extends LitElement {
             },
           ]
         : []),
-      // A copy that is out can be checked back in; the student it goes back from is
-      // looked up when the modal opens
       ...(copy.status?.toLowerCase() === 'borrowed'
         ? [
             {
@@ -235,8 +227,6 @@ export class CopyTableBks extends LitElement {
             },
           ]
         : []),
-      // A copy kept on hold can only go to the student it was set aside for, and that
-      // loan is what fulfills their hold
       ...(copy.status?.toLowerCase() === 'on_hold'
         ? [
             {
@@ -248,7 +238,6 @@ export class CopyTableBks extends LitElement {
             },
           ]
         : []),
-      // A hold is only offered when no copy is available; it is queued until a copy frees up
       ...(!bookHasAvailableCopy
         ? [
             {
@@ -292,7 +281,6 @@ export class CopyTableBks extends LitElement {
   }
 
   _handleDropdownAction() {
-    // Just close the menu, let the event bubble to parent
     this.openActionMenuId = null;
   }
 

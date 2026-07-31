@@ -142,7 +142,6 @@ class BooksnapApp extends LitElement {
     ]);
   }
 
-  // Remove class .close when the nav becomes the bottom bar (< 48em)
   _handleMobileChange = event => {
     if (event.matches) {
       this.shadowRoot?.querySelector('nav')?.classList.remove('close');
@@ -151,7 +150,7 @@ class BooksnapApp extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this._mobileQuery = window.matchMedia('(max-width: 48em)');
+    this._mobileQuery = window.matchMedia('(max-width: 56.25rem)');
     this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }
 
@@ -173,7 +172,6 @@ class BooksnapApp extends LitElement {
     event.currentTarget.closest('li').classList.add('active');
   }
 
-  // TODO: change icon and title: +1 Add book and maybe put the scanning icon for borrowings
   render() {
     return html`
       <nav>

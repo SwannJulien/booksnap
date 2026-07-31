@@ -35,15 +35,16 @@ export const sharedStyles = css`
     border-radius: var(--border-radius-default);
     font-size: var(--step-0);
 
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       font-size: var(--step--1);
       border-radius: var(--border-radius-mobile);
       padding: 1rem;
+      background-color: var(--clr-nav-dark);
     }
   }
 
   button {
-    @media (max-width: 48rem) {
+    @media (max-width: 56.25rem) {
       border-radius: var(--border-radius-mobile);
     }
   }

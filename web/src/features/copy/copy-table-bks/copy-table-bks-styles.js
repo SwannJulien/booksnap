@@ -153,7 +153,7 @@ export const copyTableBksStyles = css`
     position: relative;
   }
 
-  /* ---------- Mobile card layout (< 48rem) ----------
+  /* ---------- Mobile card layout (< 56.25rem) ----------
      Rendered instead of the table: see _isMobile in copy-table-bks.js. */
 
   .copies-panel {
