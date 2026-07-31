@@ -152,4 +152,113 @@ export const copyTableBksStyles = css`
   .action-menu-wrapper {
     position: relative;
   }
+
+  /* ---------- Mobile card layout (< 48rem) ----------
+     Rendered instead of the table: see _isMobile in copy-table-bks.js. */
+
+  .copies-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .copies-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .copies-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--clr-text-light);
+  }
+
+  .copies-panel-title svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--clr-accent);
+  }
+
+  .copies-legend {
+    display: flex;
+    gap: 0.75rem;
+    font-size: var(--step--2);
+    color: var(--clr-text-muted);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .legend-available {
+    background-color: var(--clr-accent);
+  }
+
+  .legend-out {
+    background-color: var(--clr-warning);
+  }
+
+  .copy-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .copy-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background-color: var(--clr-nav-dark);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--border-radius-default);
+  }
+
+  .copy-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .copy-card-code {
+    font-size: var(--step--2);
+    color: var(--clr-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .copy-card-section {
+    font-size: var(--step--1);
+    color: var(--clr-text-light);
+    overflow-wrap: anywhere;
+  }
+
+  .copy-card .status-container {
+    align-items: flex-end;
+  }
+
+  /* On the card the button is a full-width dashed drop target, not a table footer row */
+  .copies-panel .add-copy-button {
+    justify-content: center;
+    padding: 0.85rem;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--border-radius-default);
+  }
 `;

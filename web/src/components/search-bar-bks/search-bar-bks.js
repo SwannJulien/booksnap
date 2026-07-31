@@ -3,6 +3,7 @@ import { searchBarBksStyles } from './search-bar-bks-styles.js';
 import { sharedStyles } from '../../shared-styles.js';
 import { searchGenres } from '../../api/genre.js';
 import { getCopyStatuses } from '../../api/copy.js';
+import { formatStatus } from '../../utils/statusFormatter.js';
 
 export class SearchBarBks extends LitElement {
   static styles = [searchBarBksStyles, sharedStyles];
@@ -107,8 +108,7 @@ export class SearchBarBks extends LitElement {
                     value=${status}
                     ?selected=${this._selectedStatus === status}
                   >
-                    ${status.charAt(0).toUpperCase() +
-                    status.slice(1).replace('_', ' ')}
+                    ${formatStatus(status)}
                   </option>
                 `,
               )}

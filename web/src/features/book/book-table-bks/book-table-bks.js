@@ -2,8 +2,34 @@ import { LitElement, html } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
 import { bookTableBksStyles } from './book-table-bks-styles.js';
 import { getBookCopies } from '../../../api/copy.js';
+import { formatGenre, formatBookMeta } from '../../../utils/bookFormatter.js';
 import '../../../components/dropdown-bks/dropdown-bks.js';
 import '../../copy/copy-table-bks/copy-table-bks.js';
+
+// Chips stay here rather than in utils/: the class names below only resolve against
+// .genre-chip-* in book-table-bks-styles.js, so they are not reusable across shadow
+// roots. The mock colours each genre differently; hashing the name keeps a genre on
+// the same colour from one card to the next without maintaining a genre → colour map.
+function getGenreChipClass(genre) {
+  const hash = [...genre].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return `genre-chip-${hash % 4}`;
+}
+
+function renderGenreChips(book) {
+  if (!Array.isArray(book.genres) || !book.genres.length) return '';
+
+  return html`
+    <ul class="genre-chips">
+      ${book.genres.map(
+        genre => html`
+          <li class="genre-chip ${getGenreChipClass(genre)}">
+            ${formatGenre(genre)}
+          </li>
+        `,
+      )}
+    </ul>
+  `;
+}
 
 export class BookTableBks extends LitElement {
   static styles = [bookTableBksStyles];
@@ -20,6 +46,7 @@ export class BookTableBks extends LitElement {
     pageInfo: { type: Object },
     expandedRows: { state: true },
     openActionMenuId: { state: true },
+    _isMobile: { state: true },
   };
 
   constructor() {
@@ -35,20 +62,35 @@ export class BookTableBks extends LitElement {
     this.pageInfo = { page: 1, size: 10, totalElements: 0 };
     this.expandedRows = new Set();
     this.openActionMenuId = null;
+    this._isMobile = false;
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
+
+  // Below the mobile breakpoint the table becomes a list of cards: the seven columns
+  // never fit a phone, and a horizontally scrolling table is worse than a card.
+  _handleMobileChange = event => {
+    this._isMobile = event.matches;
+  };
 
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this._handleOutsideClick);
+    this._mobileQuery = window.matchMedia('(max-width: 48rem)');
+    this._isMobile = this._mobileQuery.matches;
+    this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('click', this._handleOutsideClick);
+    this._mobileQuery.removeEventListener('change', this._handleMobileChange);
   }
 
   render() {
+    return this._isMobile ? this._cardListTpl : this._tableTpl;
+  }
+
+  get _tableTpl() {
     return html`
       <table>
         <thead>
@@ -68,45 +110,136 @@ export class BookTableBks extends LitElement {
         <tfoot>
           <tr>
             <td colspan="7">
-              <div class="footer-content">
-                ${this.isSearchMode
-                  ? html`<span
-                      >Found ${this.searchResultCount}
-                      results${this.searchQuery
-                        ? html` for "${this.searchQuery}"`
-                        : ''}${this.searchGenre
-                        ? html` for genre "${this.searchGenre}"`
-                        : ''}${this.searchStatus
-                        ? html` with status "${this.searchStatus}"`
-                        : ''}</span
-                    >`
-                  : html`
-                      <span>${this._getPaginationText()}</span>
-                      <div class="footer-btn-container">
-                        <button
-                          class="btn-previous"
-                          ?disabled=${this.pageInfo.page === 1}
-                          @click=${this._handleClickPrevious}
-                        >
-                          Previous
-                        </button>
-                        <button
-                          class="btn-next"
-                          ?disabled=${this.pageInfo.page >=
-                          Math.ceil(
-                            this.pageInfo.totalElements / this.pageInfo.size,
-                          )}
-                          @click=${this._handleClickNext}
-                        >
-                          Next
-                        </button>
-                      </div>
-                    `}
-              </div>
+              <div class="footer-content">${this._footerContentTpl}</div>
             </td>
           </tr>
         </tfoot>
       </table>
+    `;
+  }
+
+  get _footerContentTpl() {
+    if (this.isSearchMode) {
+      return html`<span
+        >Found ${this.searchResultCount}
+        results${this.searchQuery ? html` for "${this.searchQuery}"` : ''}${this
+          .searchGenre
+          ? html` for genre "${this.searchGenre}"`
+          : ''}${this.searchStatus
+          ? html` with status "${this.searchStatus}"`
+          : ''}</span
+      >`;
+    }
+
+    return html`
+      <span>${this._getPaginationText()}</span>
+      <div class="footer-btn-container">
+        <button
+          class="btn-previous"
+          ?disabled=${this.pageInfo.page === 1}
+          @click=${this._handleClickPrevious}
+        >
+          Previous
+        </button>
+        <button
+          class="btn-next"
+          ?disabled=${this.pageInfo.page >=
+          Math.ceil(this.pageInfo.totalElements / this.pageInfo.size)}
+          @click=${this._handleClickNext}
+        >
+          Next
+        </button>
+      </div>
+    `;
+  }
+
+  get _cardListTpl() {
+    return html`
+      <div class="card-list">
+        ${this.books?.map(book => this._renderBookCard(book))}
+        <div class="card-footer">${this._footerContentTpl}</div>
+      </div>
+    `;
+  }
+
+  _renderBookCard(book) {
+    const isbn = this._getPrimaryIsbn(book);
+    const isExpanded = this.expandedRows.has(book.id);
+    const available = book.countCopies?.availableCopies ?? 0;
+    const total = book.countCopies?.totalNumberOfCopies ?? 0;
+
+    return html`
+      <article class="book-card">
+        <div class="card-main">
+          ${this._renderCover(isbn)}
+          <div class="card-body">
+            <h3 class="card-title">${book.title}</h3>
+            <p class="card-meta">${formatBookMeta(book)}</p>
+            ${renderGenreChips(book)}
+            <div
+              class="availability-container ${available > 0
+                ? 'available'
+                : 'unavailable'}"
+              style=${styleMap(this._getAvailabilityStyles(book.countCopies))}
+            >
+              <span class="availability-label"
+                >${available > 0 ? 'Available' : 'All out'}</span
+              >
+              <div class="availability-bar">
+                <div class="availability-bar-fill"></div>
+              </div>
+              <span class="availability-count"
+                >${available} of ${total} available</span
+              >
+            </div>
+          </div>
+          <div class="card-actions">
+            <div class="action-menu-wrapper">
+              <button
+                class="action-btn menu-btn ${this.openActionMenuId === book.id
+                  ? 'active'
+                  : ''}"
+                aria-label="More actions"
+                @click=${e => this._handleActionMenuToggle(e, book.id)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 -960 960 960"
+                >
+                  <path
+                    d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"
+                  />
+                </svg>
+              </button>
+              ${this.openActionMenuId === book.id
+                ? html`
+                    <dropdown-bks
+                      .options=${this._getDropdownOptions(book)}
+                      @dropdown-selected-option=${this._handleDropdownAction}
+                    ></dropdown-bks>
+                  `
+                : ''}
+            </div>
+            <button
+              class="action-btn expand-btn ${isExpanded ? 'expanded' : ''}"
+              @click=${() => this._handleRowToggle(book.id)}
+              aria-label="Expand book"
+              aria-expanded=${isExpanded}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                <path
+                  d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        ${isExpanded
+          ? html`<div class="card-expanded">
+              ${this._renderCopyTable(book.id)}
+            </div>`
+          : ''}
+      </article>
     `;
   }
 
@@ -136,14 +269,7 @@ export class BookTableBks extends LitElement {
         </td>
         <td>
           ${Array.isArray(book.genres)
-            ? book.genres.map(
-                genre => html`
-                  <div>
-                    ${genre.charAt(0).toUpperCase() +
-                    genre.slice(1).toLowerCase()}
-                  </div>
-                `,
-              )
+            ? book.genres.map(genre => html`<div>${formatGenre(genre)}</div>`)
             : book.genres || ''}
         </td>
         <td>${book.yearRecommendation?.toUpperCase().replace('_', '-')}</td>
@@ -230,24 +356,28 @@ export class BookTableBks extends LitElement {
   }
 
   _renderExpandedRow(bookId) {
+    return html`
+      <tr class="expanded-row">
+        <td colspan="7">
+          <div class="expanded-content">${this._renderCopyTable(bookId)}</div>
+        </td>
+      </tr>
+    `;
+  }
+
+  _renderCopyTable(bookId) {
     const copiesState = this._bookCopies.get(bookId);
     const book = this.books?.find(b => b.id === bookId);
 
     return html`
-      <tr class="expanded-row">
-        <td colspan="7">
-          <div class="expanded-content">
-            <copy-table-bks
-              .copies=${copiesState?.data ?? []}
-              .bookId=${bookId}
-              .bookTitle=${book?.title ?? ''}
-              .loading=${!copiesState || copiesState.loading}
-              .error=${copiesState?.error ?? ''}
-              @copy-created=${this._handleCopyCreated}
-            ></copy-table-bks>
-          </div>
-        </td>
-      </tr>
+      <copy-table-bks
+        .copies=${copiesState?.data ?? []}
+        .bookId=${bookId}
+        .bookTitle=${book?.title ?? ''}
+        .loading=${!copiesState || copiesState.loading}
+        .error=${copiesState?.error ?? ''}
+        @copy-created=${this._handleCopyCreated}
+      ></copy-table-bks>
     `;
   }
 

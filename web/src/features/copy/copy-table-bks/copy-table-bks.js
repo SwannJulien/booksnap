@@ -1,6 +1,7 @@
 import { LitElement, html } from 'lit';
 import { copyTableBksStyles } from './copy-table-bks-styles.js';
 import { createCopy } from '../../../api/copy.js';
+import { formatStatus } from '../../../utils/statusFormatter.js';
 import '../../../components/spinner-bks/spinner-bks.js';
 import '../../../components/dropdown-bks/dropdown-bks.js';
 
@@ -14,6 +15,7 @@ export class CopyTableBks extends LitElement {
     loading: { type: Boolean },
     error: { type: String },
     openActionMenuId: { state: true },
+    _isMobile: { state: true },
   };
 
   constructor() {
@@ -24,17 +26,27 @@ export class CopyTableBks extends LitElement {
     this.loading = false;
     this.error = '';
     this.openActionMenuId = null;
+    this._isMobile = false;
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
+
+  // Mirrors book-table-bks: the four columns become a stack of copy cards on a phone.
+  _handleMobileChange = event => {
+    this._isMobile = event.matches;
+  };
 
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this._handleOutsideClick);
+    this._mobileQuery = window.matchMedia('(max-width: 48rem)');
+    this._isMobile = this._mobileQuery.matches;
+    this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('click', this._handleOutsideClick);
+    this._mobileQuery.removeEventListener('change', this._handleMobileChange);
   }
 
   render() {
@@ -46,6 +58,10 @@ export class CopyTableBks extends LitElement {
       return html`<div class="error-message">Error: ${this.error}</div>`;
     }
 
+    return this._isMobile ? this._cardsTpl : this._tableTpl;
+  }
+
+  get _tableTpl() {
     return html`
       <table class="copies-table">
         <thead>
@@ -62,79 +78,123 @@ export class CopyTableBks extends LitElement {
               <tr>
                 <td>${copy.section.name}</td>
                 <td>${copy.section.id}</td>
-                <td>
-                  <div class="status-container">
-                    <span
-                      class="status-badge ${this._getStatusClass(copy.status)}"
-                    >
-                      ${this._formatStatus(copy.status)}
-                    </span>
-                    ${
-                      copy.status?.toLowerCase() !== 'available' && copy.dueDate
-                        ? html`<span class="status-due-date"
-                            >Due ${copy.dueDate}</span
-                          >`
-                        : ''
-                    }
-                  </div>
-                </td>
-                <td>
-                  <div class="action-menu-wrapper">
-                    <button
-                      class="action-btn ${
-                        this.openActionMenuId === copy.id ? 'active' : ''
-                      }"
-                      aria-label="More actions"
-                      @click=${() => this._handleCopyAction(copy.id)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 -960 960 960"
-                      >
-                        <path
-                          d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"
-                        />
-                      </svg>
-                    </button>
-                    ${
-                      this.openActionMenuId === copy.id
-                        ? html`
-                            <dropdown-bks
-                              .options=${this._getDropdownOptions(copy)}
-                              @dropdown-selected-option=${
-                                this._handleDropdownAction
-                              }
-                            ></dropdown-bks>
-                          `
-                        : ''
-                    }
-                  </div>
-                </td>
+                <td>${this._renderStatus(copy)}</td>
+                <td>${this._renderActionMenu(copy)}</td>
               </tr>
             `,
           )}
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="4">
-              <button class="add-copy-button" @click=${this._handleAddCopy}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  height="15px"
-                  viewBox="0 -960 960 960"
-                  width="15px"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"
-                  ></path>
-                </svg>
-                <p>Add new copy</p>
-              </button>
-            </td>
+            <td colspan="4">${this._renderAddCopyButton()}</td>
           </tr>
         </tfoot>
       </table>
+    `;
+  }
+
+  get _cardsTpl() {
+    return html`
+      <div class="copies-panel">
+        <div class="copies-panel-head">
+          <span class="copies-panel-title">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 -960 960 960"
+              fill="currentColor"
+            >
+              <path
+                d="M280-280h280v-80H280v80Zm0-160h400v-80H280v80Zm0-160h400v-80H280v80Zm-80 480q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"
+              />
+            </svg>
+            Copy Inventory
+          </span>
+          <span class="copies-legend">
+            <span class="legend-item">
+              <span class="legend-dot legend-available"></span>Avail
+            </span>
+            <span class="legend-item">
+              <span class="legend-dot legend-out"></span>Out
+            </span>
+          </span>
+        </div>
+        <ul class="copy-cards">
+          ${this.copies?.map(
+            copy => html`
+              <li class="copy-card">
+                <div class="copy-card-info">
+                  <span class="copy-card-code">${copy.section.id}</span>
+                  <span class="copy-card-section"
+                    >${copy.section.name || '--'}</span
+                  >
+                </div>
+                ${this._renderStatus(copy)} ${this._renderActionMenu(copy)}
+              </li>
+            `,
+          )}
+        </ul>
+        ${this._renderAddCopyButton()}
+      </div>
+    `;
+  }
+
+  _renderAddCopyButton() {
+    return html`
+      <button class="add-copy-button" @click=${this._handleAddCopy}>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="15px"
+          viewBox="0 -960 960 960"
+          width="15px"
+          fill="currentColor"
+        >
+          <path
+            d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"
+          ></path>
+        </svg>
+        <p>Add new copy</p>
+      </button>
+    `;
+  }
+
+  _renderStatus(copy) {
+    return html`
+      <div class="status-container">
+        <span class="status-badge ${this._getStatusClass(copy.status)}">
+          ${formatStatus(copy.status)}
+        </span>
+        ${copy.status?.toLowerCase() !== 'available' && copy.dueDate
+          ? html`<span class="status-due-date">Due ${copy.dueDate}</span>`
+          : ''}
+      </div>
+    `;
+  }
+
+  _renderActionMenu(copy) {
+    return html`
+      <div class="action-menu-wrapper">
+        <button
+          class="action-btn ${this.openActionMenuId === copy.id
+            ? 'active'
+            : ''}"
+          aria-label="More actions"
+          @click=${() => this._handleCopyAction(copy.id)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path
+              d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"
+            />
+          </svg>
+        </button>
+        ${this.openActionMenuId === copy.id
+          ? html`
+              <dropdown-bks
+                .options=${this._getDropdownOptions(copy)}
+                @dropdown-selected-option=${this._handleDropdownAction}
+              ></dropdown-bks>
+            `
+          : ''}
+      </div>
     `;
   }
 
@@ -234,14 +294,6 @@ export class CopyTableBks extends LitElement {
   _handleDropdownAction() {
     // Just close the menu, let the event bubble to parent
     this.openActionMenuId = null;
-  }
-
-  _formatStatus(status) {
-    if (!status) return '';
-    return status
-      .toLowerCase()
-      .replace(/_/g, ' ')
-      .replace(/^\w/, c => c.toUpperCase());
   }
 
   _getStatusClass(status) {

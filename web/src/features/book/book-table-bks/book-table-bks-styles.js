@@ -306,4 +306,151 @@ export const bookTableBksStyles = css`
   .expanded-content {
     padding: 0.5rem;
   }
+
+  /* ---------- Mobile card layout (< 48rem) ----------
+     Rendered instead of the table, not on top of it: see _isMobile in
+     book-table-bks.js. Selectors here are shared with the table where the
+     styling matches (cover, availability bar, action buttons). */
+
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .book-card {
+    background-color: var(--clr-card-gray);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--border-radius-default);
+  }
+
+  .card-main {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .card-main .book-cover,
+  .card-main .cover-placeholder {
+    width: 68px;
+    height: 100px;
+  }
+
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .card-title {
+    margin: 0;
+    font-size: var(--step-0);
+    font-weight: 600;
+    color: var(--clr-text-light);
+  }
+
+  .card-meta {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--clr-text-muted);
+  }
+
+  .genre-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .genre-chip {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: var(--step--2);
+    font-weight: 500;
+  }
+
+  .genre-chip-0 {
+    color: #93c5fd;
+    border-color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.15);
+  }
+
+  .genre-chip-1 {
+    color: #c4b5fd;
+    border-color: #8b5cf6;
+    background-color: rgba(139, 92, 246, 0.15);
+  }
+
+  .genre-chip-2 {
+    color: #7dd3fc;
+    border-color: #0ea5e9;
+    background-color: rgba(14, 165, 233, 0.15);
+  }
+
+  .genre-chip-3 {
+    color: #f0abfc;
+    border-color: #d946ef;
+    background-color: rgba(217, 70, 239, 0.15);
+  }
+
+  .availability-label {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: var(--step--2);
+    font-weight: 700;
+  }
+
+  .availability-container.available .availability-label {
+    color: var(--clr-accent);
+  }
+
+  .availability-container.unavailable .availability-label {
+    color: oklch(80.8% 0.114 19.571);
+  }
+
+  .availability-count {
+    font-size: var(--step--2);
+    color: var(--clr-text-muted);
+  }
+
+  .card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  /* Always a filled circle on a card, unlike the table where only the expanded
+     state gets one — on mobile it is the card's main affordance. */
+  .card-actions .expand-btn {
+    background-color: var(--clr-main-dark);
+    border-radius: 50%;
+    padding: 0.5rem;
+  }
+
+  .card-expanded {
+    padding: 0 1rem 1rem;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-top: 1rem;
+    border-top: 1px solid var(--clr-border);
+    font-size: var(--step--1);
+  }
+
+  .card-footer .footer-btn-container button {
+    font-size: var(--step--1);
+  }
 `;

@@ -17,7 +17,7 @@ export const searchBarBksStyles = css`
      @media (max-width: 48rem) {
       background-color: transparent;
       padding: 0;
-      grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 
       .searchbar-search {
         grid-column: 1 / -1;
@@ -67,6 +67,14 @@ export const searchBarBksStyles = css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* Keeps the label clear of the arrow background image, which is painted over the
+     text and has no box of its own to push it away. Needs to out-specify the
+     'input, select { padding }' shorthand in sharedStyles, which is applied after
+     this sheet and would otherwise reset padding-right. */
+  select[name='availability'] {
+    padding-right: 36px;
   }
 
   button {
