@@ -43,12 +43,6 @@ export const sharedStyles = css`
     }
   }
 
-  button {
-    @media (max-width: 56.25rem) {
-      border-radius: var(--border-radius-mobile);
-    }
-  }
-
   option {
     background-color: white;
   }

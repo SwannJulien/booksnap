@@ -83,6 +83,7 @@ export const searchBarBksStyles = css`
     @media (max-width: 56.25rem) {
       padding: 0.8rem;
       height: 52px;
+      border-radius: var(--border-radius-mobile);
       background-color: var(--clr-nav-dark);
     }
   }

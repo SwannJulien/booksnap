@@ -23,7 +23,7 @@ export const addBookView = [
     .tabs button {
       padding: 1em 0;
       width: 12rem;
-      background-color: var(--clr-main-dark);
+      background-color: transparent;
       border: none;
       border-bottom: 2px solid transparent;
       font-size: var(--step-0);
