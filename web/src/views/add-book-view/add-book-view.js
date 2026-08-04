@@ -54,7 +54,7 @@ export class AddBookView extends LitElement {
       <div class="header">
         <h1>Add a new book</h1>
         <p>
-          Add a new book by scanning its barecode or by entering its ISBN or by
+          Add a new book by scanning its barcode or by entering its ISBN or by
           filling all the information manually
         </p>
       </div>
@@ -105,9 +105,7 @@ export class AddBookView extends LitElement {
   _renderScanTab() {
     return html`
       <h2 class="card-title">
-        ${this.showBookForm
-          ? 'Review the book details and make any necessary corrections before submit'
-          : "Scan your book's barecode to get its details automatically"}
+        ${this.showBookForm ? 'Review the details' : "Scan your book's barcode"}
       </h2>
 
       ${this.isFetching
@@ -132,7 +130,7 @@ export class AddBookView extends LitElement {
       <barcode-scanner-bks
         mode="barcode"
         ?hidden=${this.showBookForm}
-        @sendBarecode=${this._handleIsbnInput}
+        @sendBarcode=${this._handleIsbnInput}
       ></barcode-scanner-bks>
     `;
   }
@@ -141,8 +139,8 @@ export class AddBookView extends LitElement {
     return html`
       <h2 class="card-title">
         ${this.showBookForm
-          ? 'Review the book details and make any necessary corrections before submit'
-          : "Enter your book's ISBN here to get its details automatically"}
+          ? 'Review the details'
+          : "Enter your book's ISBN"}
       </h2>
       ${this.isFetching
         ? html`<spinner-bks></spinner-bks>`
@@ -154,7 +152,6 @@ export class AddBookView extends LitElement {
             >
               <input
                 type="text"
-                id="isbnInput"
                 name="isbn"
                 .value=${this.isbn}
                 placeholder="Enter ISBN here"

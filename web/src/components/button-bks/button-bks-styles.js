@@ -7,10 +7,6 @@ export const buttonBksStyles = [
     :host {
       display: inline-block;
       margin-top: 1.5rem;
-
-      @media (max-width: 56.25rem) {
-        margin-top: 0rem;
-      }
     }
     button {
       min-width: 8rem;

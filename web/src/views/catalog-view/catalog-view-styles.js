@@ -81,14 +81,6 @@ export const catalogView = [
       cursor: pointer;
     }
 
-    input[name='search'] {
-      width: 800px;
-    }
-
-    select[name='availability'] {
-      width: 200px;
-    }
-
     button {
       background-color: var(--clr-main-dark);
       border: 1px solid var(--clr-border);

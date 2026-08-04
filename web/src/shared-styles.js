@@ -38,8 +38,6 @@ export const sharedStyles = css`
     @media (max-width: 56.25rem) {
       font-size: var(--step--1);
       border-radius: var(--border-radius-mobile);
-      padding: 1rem;
-      background-color: var(--clr-nav-dark);
     }
   }
 

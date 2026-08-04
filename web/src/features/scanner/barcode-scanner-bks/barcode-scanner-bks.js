@@ -111,7 +111,7 @@ export class BarcodeScannerBks extends LitElement {
                 ? 'QR_CODE'
                 : 'BARCODE';
             this.dispatchEvent(
-              new CustomEvent('sendBarecode', {
+              new CustomEvent('sendBarcode', {
                 bubbles: true,
                 composed: true,
                 detail: { code: this.result, type },

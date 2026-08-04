@@ -37,6 +37,10 @@ export const addBookView = [
       color: var(--clr-accent);
     }
 
+    input[name='isbn'] {
+      padding: 1rem;
+    }
+
     .card-title {
       font-family: var(--font-title), sans-serif;
       font-weight: 600;

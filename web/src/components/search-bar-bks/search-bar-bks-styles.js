@@ -45,6 +45,7 @@ export const searchBarBksStyles = css`
 
     @media (max-width: 56.25rem) {
       background-color: var(--clr-nav-dark);
+      padding: 1rem 0 1rem 40px;
     }
   }
 
@@ -71,6 +72,11 @@ export const searchBarBksStyles = css`
 
   select[name='availability'] {
     padding-right: 36px;
+
+    @media (max-width: 56.25rem) {
+      background-color: var(--clr-nav-dark);
+      padding: 1rem;
+    }
   }
 
   button {

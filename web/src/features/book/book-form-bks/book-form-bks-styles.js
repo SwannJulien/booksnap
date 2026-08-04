@@ -5,26 +5,8 @@ export const bookFormBksStyles = css`
     display: block;
   }
 
-  .book-form {
-    display: grid;
-    grid-template-columns: 15% 50%;
-    gap: 1em;
-    align-items: center;
-  }
-
-  .book-form.update {
-    grid-template-columns: 30% 70%;
-  }
-
-  @media (max-width: 75rem) {
-    .book-form {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .cover-section {
-    grid-column: 2;
-    margin-bottom: 2rem;
+  button-bks {
+    margin-top: 0;
   }
 
   label {
@@ -34,6 +16,30 @@ export const bookFormBksStyles = css`
   label.required::after {
     content: ' *';
     color: var(--clr-warning);
+  }
+
+  input, select {
+    padding: 1rem;
+  }
+
+  .book-form {
+    display: grid;
+    grid-template-columns: 15% 50%;
+    gap: 1em;
+    align-items: center;
+
+    @media (max-width: 75rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .book-form.update {
+    grid-template-columns: 30% 70%;
+  }
+  
+  .cover-section {
+    grid-column: 2;
+    margin-bottom: 2rem;
   }
 
   .required-note {
@@ -46,9 +52,5 @@ export const bookFormBksStyles = css`
 
   .required-note span {
     color: var(--clr-warning);
-  }
-
-  button-bks {
-    margin-top: 0;
   }
 `;
