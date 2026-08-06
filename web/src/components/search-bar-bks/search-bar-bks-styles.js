@@ -70,6 +70,14 @@ export const searchBarBksStyles = css`
     white-space: nowrap;
   }
 
+  select[name='availability'].is-placeholder {
+    color: var(--clr-text-muted);
+  }
+
+  select[name='availability'] option {
+    color: var(--clr-text-light);
+  }
+
   select[name='availability'] {
     padding-right: 36px;
 

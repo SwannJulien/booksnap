@@ -5,6 +5,7 @@ import { borrowingView } from './borrowing-view-styles.js';
 import { sharedStyles } from '../../shared-styles.js';
 import { getBorrowings } from '../../api/borrowing.js';
 import { getHolds } from '../../api/hold.js';
+import { formatDate, daysLate } from '../../utils/dateFormatter.js';
 import { CoverController } from '../../controllers/cover-controller.js';
 import '../../components/button-bks/button-bks.js';
 import '../../components/spinner-bks/spinner-bks.js';
@@ -19,6 +20,8 @@ const RETURN_ICON_PATH =
   'M280-200v-80h284q63 0 109.5-40T720-420q0-60-46.5-100T564-560H312l104 104-56 56-200-200 200-200 56 56-104 104h252q97 0 166.5 63T800-420q0 94-69.5 157T564-200H280Z';
 const HAND_OVER_ICON_PATH =
   'M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Zm190 520 226-226-56-58-170 170-86-84-56 56 142 142Z';
+const MORE_ACTIONS_ICON_PATH =
+  'M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z';
 
 const BORROWED = 'borrowed';
 const HOLD = 'hold';
@@ -37,112 +40,6 @@ const QUICK_FILTERS = {
     { label: 'Expired', status: 'expired' },
   ],
 };
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function parseDate(dateStr) {
-  const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  return parseDate(dateStr).toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  });
-}
-
-function paginationText(pageInfo) {
-  const { page, size, totalElements } = pageInfo;
-  if (!totalElements) return 'No results';
-  const start = (page - 1) * size + 1;
-  const end = Math.min(page * size, totalElements);
-  return html`Showing <strong>${start} to ${end}</strong> of ${totalElements}
-    results`;
-}
-
-function daysLate(endDateStr) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.max(1, Math.round((today - parseDate(endDateStr)) / MS_PER_DAY));
-}
-
-function holdStatusTpl(hold) {
-  switch (hold.status) {
-    case 'active':
-      return html`<span class="status-pill status-ready">Ready</span>`;
-    case 'expired':
-      return html`<span class="status-pill status-late">Expired</span>`;
-    default:
-      return html`<span class="status-pill status-waiting">Waiting</span>`;
-  }
-}
-
-function borrowingStatusTpl(borrowing) {
-  return borrowing.status === 'overdue'
-    ? html`<span class="status-pill status-late">
-        Late (${daysLate(borrowing.endDate)} days)
-      </span>`
-    : html`<span class="status-pill status-on-time">On-time</span>`;
-}
-
-function borrowingOptions(borrowing) {
-  return [
-    {
-      action: 'return-book',
-      data: borrowing,
-      path: RETURN_ICON_PATH,
-      label: 'Return',
-      class: '',
-    },
-  ];
-}
-
-// Only an active hold has a copy set aside, so it is the only one that can be handed
-// over — the others have nothing to give the student yet
-function holdOptions(hold) {
-  return hold.status === 'active'
-    ? [
-        {
-          action: 'hand-over-hold',
-          data: hold,
-          path: HAND_OVER_ICON_PATH,
-          label: 'Hand over',
-          class: '',
-        },
-      ]
-    : [];
-}
-
-function userCellTpl(user) {
-  return html`
-    <div class="user-detail-container">
-      <span class="user-avatar">
-        ${(user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? '')}
-      </span>
-      <div class="user-info">
-        <span class="user-name">${user.firstName} ${user.lastName}</span>
-        <span class="user-id">ID: #BK-${user.id}</span>
-      </div>
-    </div>
-  `;
-}
-
-const headerTpl = html`
-  <div class="header">
-    <div class="header-title">
-      <h1>Borrowings</h1>
-      <p>Track and manage active book loans and member reservations</p>
-    </div>
-    <button-bks
-      label="New Loan"
-      icon="add"
-      @click=${() => Router.go('/scan')}
-    ></button-bks>
-  </div>
-`;
 
 export class BorrowingView extends LitElement {
   static styles = [sharedStyles, borrowingView];
@@ -178,6 +75,10 @@ export class BorrowingView extends LitElement {
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
 
+  /* ---------------------------------------------------------------- *
+   * Lifecycle
+   * ---------------------------------------------------------------- */
+
   _handleMobileChange = event => {
     this._isMobile = event.matches;
   };
@@ -198,6 +99,10 @@ export class BorrowingView extends LitElement {
       clearTimeout(this._debounceTimer);
     }
   }
+
+  /* ---------------------------------------------------------------- *
+   * Data
+   * ---------------------------------------------------------------- */
 
   // One task for both lists: the two endpoints answer with the same shape, and going
   // through a single task keeps the tab switch from fetching the list it is leaving.
@@ -223,9 +128,43 @@ export class BorrowingView extends LitElement {
     return this._mode === HOLD;
   }
 
+  // Row action menus. `static` throughout this file marks the helpers that read nothing
+  // off the instance — it is also what keeps `class-methods-use-this` quiet.
+  static _borrowingOptions(borrowing) {
+    return [
+      {
+        action: 'return-book',
+        data: borrowing,
+        path: RETURN_ICON_PATH,
+        label: 'Return',
+        class: '',
+      },
+    ];
+  }
+
+  // Only an active hold has a copy set aside, so it is the only one that can be handed
+  // over — the others have nothing to give the student yet
+  static _holdOptions(hold) {
+    return hold.status === 'active'
+      ? [
+          {
+            action: 'hand-over-hold',
+            data: hold,
+            path: HAND_OVER_ICON_PATH,
+            label: 'Hand over',
+            class: '',
+          },
+        ]
+      : [];
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Templates
+   * ---------------------------------------------------------------- */
+
   render() {
     return html`
-      ${headerTpl} ${this._toolbarTpl}
+      ${this._headerTpl} ${this._toolbarTpl}
       ${this.listTask.render({
         pending: () => html`<spinner-bks></spinner-bks>`,
         complete: results =>
@@ -236,32 +175,23 @@ export class BorrowingView extends LitElement {
     `;
   }
 
-  get _returnModalTpl() {
+  get _headerTpl() {
     return html`
-      <return-modal-bks
-        ?open=${!!this._borrowingToReturn}
-        .borrowingId=${this._borrowingToReturn?.id}
-        .bookTitle=${this._borrowingToReturn?.bookTitle ?? ''}
-        .studentName=${this._borrowingToReturn?.studentName ?? ''}
-        @modal-close=${this._handleReturnModalClose}
-        @borrowing-returned=${this._handleListChanged}
-      ></return-modal-bks>
-    `;
-  }
-
-  // Handing the copy over turns the hold into a loan, so it reuses the loan modal's
-  // pickup step rather than a modal of its own
-  get _handOverModalTpl() {
-    return html`
-      <loan-modal-bks
-        ?open=${!!this._holdToHandOver}
-        .copyId=${this._holdToHandOver?.copyId}
-        .bookTitle=${this._holdToHandOver?.bookTitle ?? ''}
-        .hold=${this._holdToHandOver?.hold ?? null}
-        @modal-close=${this._handleHandOverModalClose}
-        @loan-created=${this._handleListChanged}
-        @copy-unavailable=${this._handleListChanged}
-      ></loan-modal-bks>
+      <div class="header">
+        <div class="header-title">
+          <h1>Borrowings</h1>
+          <p>Track and manage active book loans and member reservations</p>
+        </div>
+        ${this._isHoldMode
+          ? ''
+          : html`
+              <button-bks
+                label="New Loan"
+                icon="add"
+                @click=${() => Router.go('/scan')}
+              ></button-bks>
+            `}
+      </div>
     `;
   }
 
@@ -374,57 +304,36 @@ export class BorrowingView extends LitElement {
     `;
   }
 
-  _paginationTpl(pageInfo) {
-    return html`
-      <span>${paginationText(pageInfo)}</span>
-      <div class="footer-btn-container">
-        <button
-          class="btn-previous"
-          ?disabled=${pageInfo.page <= 1}
-          @click=${this._handleClickPrevious}
-        >
-          Previous
-        </button>
-        <button
-          class="btn-next"
-          ?disabled=${pageInfo.page >= pageInfo.totalPages}
-          @click=${this._handleClickNext}
-        >
-          Next
-        </button>
-      </div>
-    `;
-  }
-
   _borrowingRowTpl(borrowing) {
     const isLate = borrowing.status === 'overdue';
+    const options = BorrowingView._borrowingOptions(borrowing);
 
     return html`
       <tr>
         <td>${this._bookCellTpl(borrowing.book)}</td>
-        <td>${userCellTpl(borrowing.user)}</td>
+        <td>${BorrowingView._userCellTpl(borrowing.user)}</td>
         <td>${formatDate(borrowing.startDate)}</td>
         <td class=${isLate ? 'due-date-late' : ''}>
           ${formatDate(borrowing.endDate)}
         </td>
-        <td>${borrowingStatusTpl(borrowing)}</td>
-        <td>${this._actionsTpl(borrowing, borrowingOptions(borrowing))}</td>
+        <td>${BorrowingView._borrowingStatusTpl(borrowing)}</td>
+        <td>${this._actionsTpl(borrowing, options)}</td>
       </tr>
     `;
   }
 
   _holdRowTpl(hold) {
-    const options = holdOptions(hold);
+    const options = BorrowingView._holdOptions(hold);
 
     return html`
       <tr>
         <td>${this._bookCellTpl(hold.book)}</td>
-        <td>${userCellTpl(hold.user)}</td>
+        <td>${BorrowingView._userCellTpl(hold.user)}</td>
         <td>${formatDate(hold.placedOn)}</td>
         <td class=${hold.status === 'expired' ? 'due-date-late' : ''}>
           ${formatDate(hold.endDate) || '—'}
         </td>
-        <td>${holdStatusTpl(hold)}</td>
+        <td>${BorrowingView._holdStatusTpl(hold)}</td>
         <td>${options.length ? this._actionsTpl(hold, options) : ''}</td>
       </tr>
     `;
@@ -434,8 +343,8 @@ export class BorrowingView extends LitElement {
     const isLate = borrowing.status === 'overdue';
 
     return this._cardTpl(borrowing, {
-      statusTpl: borrowingStatusTpl(borrowing),
-      options: borrowingOptions(borrowing),
+      statusTpl: BorrowingView._borrowingStatusTpl(borrowing),
+      options: BorrowingView._borrowingOptions(borrowing),
       startLabel: 'Borrow Date',
       startDate: formatDate(borrowing.startDate),
       endLabel: 'Due Date',
@@ -446,8 +355,8 @@ export class BorrowingView extends LitElement {
 
   _holdCardTpl(hold) {
     return this._cardTpl(hold, {
-      statusTpl: holdStatusTpl(hold),
-      options: holdOptions(hold),
+      statusTpl: BorrowingView._holdStatusTpl(hold),
+      options: BorrowingView._holdOptions(hold),
       startLabel: 'Placed On',
       startDate: formatDate(hold.placedOn),
       endLabel: 'Collect Before',
@@ -473,7 +382,7 @@ export class BorrowingView extends LitElement {
             ${options.length ? this._actionsTpl(row, options) : ''}
           </div>
         </div>
-        <div class="card-user">${userCellTpl(row.user)}</div>
+        <div class="card-user">${BorrowingView._userCellTpl(row.user)}</div>
         <dl class="card-dates">
           <div class="card-date">
             <dt>${startLabel}</dt>
@@ -500,6 +409,48 @@ export class BorrowingView extends LitElement {
     `;
   }
 
+  static _userCellTpl(user) {
+    return html`
+      <div class="user-detail-container">
+        <span class="user-avatar">
+          ${(user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? '')}
+        </span>
+        <div class="user-info">
+          <span class="user-name">${user.firstName} ${user.lastName}</span>
+          <span class="user-id">ID: #BK-${user.id}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  _coverTpl(book) {
+    const isbn = book.isbn13 || book.isbn10;
+    const coverUrl = isbn ? this._covers.get(isbn) : null;
+
+    return coverUrl
+      ? html`<img class="book-cover" src=${coverUrl} alt="${book.title}" />`
+      : html`<div class="cover-placeholder">No cover</div>`;
+  }
+
+  static _borrowingStatusTpl(borrowing) {
+    return borrowing.status === 'overdue'
+      ? html`<span class="status-pill status-late">
+          Late (${daysLate(borrowing.endDate)} days)
+        </span>`
+      : html`<span class="status-pill status-on-time">On-time</span>`;
+  }
+
+  static _holdStatusTpl(hold) {
+    switch (hold.status) {
+      case 'active':
+        return html`<span class="status-pill status-ready">Ready</span>`;
+      case 'expired':
+        return html`<span class="status-pill status-late">Expired</span>`;
+      default:
+        return html`<span class="status-pill status-waiting">Waiting</span>`;
+    }
+  }
+
   _actionsTpl(row, options) {
     const isMenuOpen = this._openActionMenuId === row.id;
 
@@ -511,9 +462,7 @@ export class BorrowingView extends LitElement {
           @click=${() => this._handleToggleActionMenu(row.id)}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
-            <path
-              d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"
-            />
+            <path d=${MORE_ACTIONS_ICON_PATH} />
           </svg>
         </button>
         ${
@@ -530,14 +479,68 @@ export class BorrowingView extends LitElement {
     `;
   }
 
-  _coverTpl(book) {
-    const isbn = book.isbn13 || book.isbn10;
-    const coverUrl = isbn ? this._covers.get(isbn) : null;
-
-    return coverUrl
-      ? html`<img class="book-cover" src=${coverUrl} alt="${book.title}" />`
-      : html`<div class="cover-placeholder">No cover</div>`;
+  _paginationTpl(pageInfo) {
+    return html`
+      <span>${BorrowingView._paginationTextTpl(pageInfo)}</span>
+      <div class="footer-btn-container">
+        <button
+          class="btn-previous"
+          ?disabled=${pageInfo.page <= 1}
+          @click=${this._handleClickPrevious}
+        >
+          Previous
+        </button>
+        <button
+          class="btn-next"
+          ?disabled=${pageInfo.page >= pageInfo.totalPages}
+          @click=${this._handleClickNext}
+        >
+          Next
+        </button>
+      </div>
+    `;
   }
+
+  static _paginationTextTpl({ page, size, totalElements }) {
+    if (!totalElements) return 'No results';
+    const start = (page - 1) * size + 1;
+    const end = Math.min(page * size, totalElements);
+    return html`Showing <strong>${start} to ${end}</strong> of ${totalElements}
+      results`;
+  }
+
+  get _returnModalTpl() {
+    return html`
+      <return-modal-bks
+        ?open=${!!this._borrowingToReturn}
+        .borrowingId=${this._borrowingToReturn?.id}
+        .bookTitle=${this._borrowingToReturn?.bookTitle ?? ''}
+        .studentName=${this._borrowingToReturn?.studentName ?? ''}
+        @modal-close=${this._handleReturnModalClose}
+        @borrowing-returned=${this._handleListChanged}
+      ></return-modal-bks>
+    `;
+  }
+
+  // Handing the copy over turns the hold into a loan, so it reuses the loan modal's
+  // pickup step rather than a modal of its own
+  get _handOverModalTpl() {
+    return html`
+      <loan-modal-bks
+        ?open=${!!this._holdToHandOver}
+        .copyId=${this._holdToHandOver?.copyId}
+        .bookTitle=${this._holdToHandOver?.bookTitle ?? ''}
+        .hold=${this._holdToHandOver?.hold ?? null}
+        @modal-close=${this._handleHandOverModalClose}
+        @loan-created=${this._handleListChanged}
+        @copy-unavailable=${this._handleListChanged}
+      ></loan-modal-bks>
+    `;
+  }
+
+  /* ---------------------------------------------------------------- *
+   * Event handlers
+   * ---------------------------------------------------------------- */
 
   _handleToggleActionMenu(rowId) {
     this._openActionMenuId = this._openActionMenuId === rowId ? null : rowId;

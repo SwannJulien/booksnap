@@ -2,22 +2,12 @@ import { LitElement, html } from 'lit';
 import { loanModalBksStyles } from './loan-modal-bks-styles.js';
 import { searchUsers } from '../../../api/user.js';
 import { createBorrowing } from '../../../api/borrowing.js';
+import { formatDate } from '../../../utils/dateFormatter.js';
 import '../../../components/modal-bks/modal-bks.js';
 import '../../../components/button-bks/button-bks.js';
 
 const MIN_QUERY_LENGTH = 3;
 const SEARCH_DEBOUNCE_MS = 300;
-
-// LocalDate string ("2023-10-12") to a readable date, avoiding UTC parsing shifts.
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-    month: 'short',
-    day: '2-digit',
-    year: 'numeric',
-  });
-}
 
 export class LoanModalBks extends LitElement {
   static styles = [loanModalBksStyles];

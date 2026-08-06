@@ -100,7 +100,11 @@ export class SearchBarBks extends LitElement {
         </div>
         <div class="searchbar-filter-availability">
           <div class="availability-wrapper">
-            <select name="availability" @change=${this._handleStatusChange}>
+            <select
+              name="availability"
+              class=${this._selectedStatus ? '' : 'is-placeholder'}
+              @change=${this._handleStatusChange}
+            >
               <option value="" disabled selected hidden>Availability</option>
               ${this._statuses.map(
                 status => html`

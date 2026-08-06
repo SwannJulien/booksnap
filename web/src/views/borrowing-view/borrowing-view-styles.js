@@ -133,8 +133,9 @@ export const borrowingView = [
       box-sizing: border-box;
 
       @media (max-width: 56.25rem) {
+        flex: 1 0 100%;
+        width: 100%;
         padding: 1rem;
-        background-color: var(--clr-nav-dark);
       }
     }
 
