@@ -40,8 +40,6 @@ const QUICK_FILTERS = {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-// LocalDate string ("2023-10-12") to a local Date, avoiding UTC parsing shifts. Also
-// accepts a LocalDateTime ("2023-10-12T09:30:00"), whose time part is not shown.
 function parseDate(dateStr) {
   const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
   return new Date(year, month - 1, day);
@@ -80,6 +78,42 @@ function holdStatusTpl(hold) {
     default:
       return html`<span class="status-pill status-waiting">Waiting</span>`;
   }
+}
+
+function borrowingStatusTpl(borrowing) {
+  return borrowing.status === 'overdue'
+    ? html`<span class="status-pill status-late">
+        Late (${daysLate(borrowing.endDate)} days)
+      </span>`
+    : html`<span class="status-pill status-on-time">On-time</span>`;
+}
+
+function borrowingOptions(borrowing) {
+  return [
+    {
+      action: 'return-book',
+      data: borrowing,
+      path: RETURN_ICON_PATH,
+      label: 'Return',
+      class: '',
+    },
+  ];
+}
+
+// Only an active hold has a copy set aside, so it is the only one that can be handed
+// over — the others have nothing to give the student yet
+function holdOptions(hold) {
+  return hold.status === 'active'
+    ? [
+        {
+          action: 'hand-over-hold',
+          data: hold,
+          path: HAND_OVER_ICON_PATH,
+          label: 'Hand over',
+          class: '',
+        },
+      ]
+    : [];
 }
 
 function userCellTpl(user) {
@@ -123,6 +157,7 @@ export class BorrowingView extends LitElement {
     _openActionMenuId: { state: true },
     _borrowingToReturn: { type: Object, state: true },
     _holdToHandOver: { type: Object, state: true },
+    _isMobile: { state: true },
   };
 
   _covers = new CoverController(this);
@@ -138,18 +173,27 @@ export class BorrowingView extends LitElement {
     this._openActionMenuId = null;
     this._borrowingToReturn = null;
     this._holdToHandOver = null;
+    this._isMobile = false;
     this._debounceTimer = null;
     this._handleOutsideClick = this._handleOutsideClick.bind(this);
   }
 
+  _handleMobileChange = event => {
+    this._isMobile = event.matches;
+  };
+
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('click', this._handleOutsideClick);
+    this._mobileQuery = window.matchMedia('(max-width: 56.25rem)');
+    this._isMobile = this._mobileQuery.matches;
+    this._mobileQuery.addEventListener('change', this._handleMobileChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('click', this._handleOutsideClick);
+    this._mobileQuery.removeEventListener('change', this._handleMobileChange);
     if (this._debounceTimer) {
       clearTimeout(this._debounceTimer);
     }
@@ -184,7 +228,8 @@ export class BorrowingView extends LitElement {
       ${headerTpl} ${this._toolbarTpl}
       ${this.listTask.render({
         pending: () => html`<spinner-bks></spinner-bks>`,
-        complete: results => this._tableTpl(results),
+        complete: results =>
+          this._isMobile ? this._cardListTpl(results) : this._tableTpl(results),
         error: err => html`<p>Error loading ${this._mode}s: ${err.message}</p>`,
       })}
       ${this._returnModalTpl} ${this._handOverModalTpl}
@@ -299,28 +344,55 @@ export class BorrowingView extends LitElement {
           <tr>
             <td colspan="6">
               <div class="footer-content">
-                <span>${paginationText(results.page)}</span>
-                <div class="footer-btn-container">
-                  <button
-                    class="btn-previous"
-                    ?disabled=${results.page.page <= 1}
-                    @click=${this._handleClickPrevious}
-                  >
-                    Previous
-                  </button>
-                  <button
-                    class="btn-next"
-                    ?disabled=${results.page.page >= results.page.totalPages}
-                    @click=${this._handleClickNext}
-                  >
-                    Next
-                  </button>
-                </div>
+                ${this._paginationTpl(results.page)}
               </div>
             </td>
           </tr>
         </tfoot>
       </table>
+    `;
+  }
+
+  // Below the mobile breakpoint the six columns stop fitting side by side, so each row
+  // becomes a card stacked on the next one
+  _cardListTpl(results) {
+    const isHold = this._isHoldMode;
+
+    return html`
+      <div class="card-list">
+        ${
+          results.data.length
+            ? results.data.map(row =>
+                isHold ? this._holdCardTpl(row) : this._borrowingCardTpl(row),
+              )
+            : html`<p class="empty-state">
+                ${isHold ? 'No holds found' : 'No borrowings found'}
+              </p>`
+        }
+        <div class="card-footer">${this._paginationTpl(results.page)}</div>
+      </div>
+    `;
+  }
+
+  _paginationTpl(pageInfo) {
+    return html`
+      <span>${paginationText(pageInfo)}</span>
+      <div class="footer-btn-container">
+        <button
+          class="btn-previous"
+          ?disabled=${pageInfo.page <= 1}
+          @click=${this._handleClickPrevious}
+        >
+          Previous
+        </button>
+        <button
+          class="btn-next"
+          ?disabled=${pageInfo.page >= pageInfo.totalPages}
+          @click=${this._handleClickNext}
+        >
+          Next
+        </button>
+      </div>
     `;
   }
 
@@ -335,45 +407,14 @@ export class BorrowingView extends LitElement {
         <td class=${isLate ? 'due-date-late' : ''}>
           ${formatDate(borrowing.endDate)}
         </td>
-        <td>
-          ${
-            isLate
-              ? html`<span class="status-pill status-late">
-                  Late (${daysLate(borrowing.endDate)} days)
-                </span>`
-              : html`<span class="status-pill status-on-time">On-time</span>`
-          }
-        </td>
-        <td>
-          ${this._actionsTpl(borrowing, [
-            {
-              action: 'return-book',
-              data: borrowing,
-              path: RETURN_ICON_PATH,
-              label: 'Return',
-              class: '',
-            },
-          ])}
-        </td>
+        <td>${borrowingStatusTpl(borrowing)}</td>
+        <td>${this._actionsTpl(borrowing, borrowingOptions(borrowing))}</td>
       </tr>
     `;
   }
 
   _holdRowTpl(hold) {
-    // Only an active hold has a copy set aside, so it is the only one that can be
-    // handed over — the others have nothing to give the student yet
-    const options =
-      hold.status === 'active'
-        ? [
-            {
-              action: 'hand-over-hold',
-              data: hold,
-              path: HAND_OVER_ICON_PATH,
-              label: 'Hand over',
-              class: '',
-            },
-          ]
-        : [];
+    const options = holdOptions(hold);
 
     return html`
       <tr>
@@ -386,6 +427,64 @@ export class BorrowingView extends LitElement {
         <td>${holdStatusTpl(hold)}</td>
         <td>${options.length ? this._actionsTpl(hold, options) : ''}</td>
       </tr>
+    `;
+  }
+
+  _borrowingCardTpl(borrowing) {
+    const isLate = borrowing.status === 'overdue';
+
+    return this._cardTpl(borrowing, {
+      statusTpl: borrowingStatusTpl(borrowing),
+      options: borrowingOptions(borrowing),
+      startLabel: 'Borrow Date',
+      startDate: formatDate(borrowing.startDate),
+      endLabel: 'Due Date',
+      endDate: formatDate(borrowing.endDate),
+      isEndLate: isLate,
+    });
+  }
+
+  _holdCardTpl(hold) {
+    return this._cardTpl(hold, {
+      statusTpl: holdStatusTpl(hold),
+      options: holdOptions(hold),
+      startLabel: 'Placed On',
+      startDate: formatDate(hold.placedOn),
+      endLabel: 'Collect Before',
+      endDate: formatDate(hold.endDate) || '—',
+      isEndLate: hold.status === 'expired',
+    });
+  }
+
+  _cardTpl(
+    row,
+    { statusTpl, options, startLabel, startDate, endLabel, endDate, isEndLate },
+  ) {
+    return html`
+      <article class="loan-card">
+        <div class="card-main">
+          ${this._coverTpl(row.book)}
+          <div class="card-body">
+            <span class="book-title">${row.book.title}</span>
+            <span class="book-authors">${row.book.authors?.join(', ')}</span>
+            ${statusTpl}
+          </div>
+          <div class="card-actions">
+            ${options.length ? this._actionsTpl(row, options) : ''}
+          </div>
+        </div>
+        <div class="card-user">${userCellTpl(row.user)}</div>
+        <dl class="card-dates">
+          <div class="card-date">
+            <dt>${startLabel}</dt>
+            <dd>${startDate}</dd>
+          </div>
+          <div class="card-date">
+            <dt>${endLabel}</dt>
+            <dd class=${isEndLate ? 'due-date-late' : ''}>${endDate}</dd>
+          </div>
+        </dl>
+      </article>
     `;
   }
 

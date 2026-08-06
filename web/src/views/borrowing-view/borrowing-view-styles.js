@@ -13,11 +13,39 @@ export const borrowingView = [
     .header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
     }
 
     .header p {
       color: var(--clr-text-muted);
+    }
+
+    @media (max-width: 56.25rem) {
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        column-gap: 1rem;
+        row-gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .header-title {
+        display: contents;
+      }
+
+      .header h1 {
+        grid-area: 1 / 1;
+      }
+
+      .header button-bks {
+        grid-area: 1 / 2;
+        justify-self: end;
+      }
+
+      .header p {
+        grid-area: 2 / 1 / 2 / -1;
+        margin-top: 1rem;
+      }
     }
 
     .toolbar {
@@ -27,19 +55,21 @@ export const borrowingView = [
       gap: 1rem;
       margin-top: 2rem;
       flex-wrap: wrap;
+      background-color: var(--clr-card-gray);
+      padding: 1.2rem;
+      border-radius: var(--border-radius-default);
     }
 
     .mode-switch {
       display: flex;
       gap: 0.25rem;
-      padding: 0.25rem;
       border: 1px solid var(--clr-border);
       border-radius: var(--border-radius-default);
       background-color: var(--clr-main-dark);
     }
 
     .mode-chip {
-      padding: 0.5rem 1.5rem;
+      padding: 0.8rem 1.5rem;
       border: none;
       border-radius: calc(var(--border-radius-default) - 2px);
       background: none;
@@ -64,7 +94,7 @@ export const borrowingView = [
       align-items: center;
       gap: 0.5rem;
       flex-wrap: wrap;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
     }
 
     .quick-filters-label {
@@ -101,6 +131,11 @@ export const borrowingView = [
       color: var(--clr-text-light);
       width: min(24rem, 100%);
       box-sizing: border-box;
+
+      @media (max-width: 56.25rem) {
+        padding: 1rem;
+        background-color: var(--clr-nav-dark);
+      }
     }
 
     table {
@@ -365,6 +400,97 @@ export const borrowingView = [
     .btn-next {
       width: 4em;
       height: 45px;
+    }
+
+    /* ---------- Mobile card layout (< 56.25rem) ----------
+       Rendered instead of the table: see _isMobile in borrowing-view.js. */
+
+    .card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .loan-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 1rem;
+      background-color: var(--clr-card-gray);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--border-radius-default);
+    }
+
+    .card-main {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 1rem;
+    }
+
+    .card-main .book-cover,
+    .card-main .cover-placeholder {
+      width: 68px;
+      height: 100px;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+      min-width: 0;
+    }
+
+    .card-body .book-title {
+      overflow-wrap: anywhere;
+    }
+
+    /* Reserved even when the row has no action, so every card lines up the same way */
+    .card-actions {
+      display: flex;
+      align-items: flex-start;
+      min-width: 32px;
+    }
+
+    .card-user,
+    .card-dates {
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--clr-border);
+    }
+
+    .card-dates {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 0;
+    }
+
+    .card-dates dt {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: var(--step--2);
+      color: var(--clr-text-muted);
+    }
+
+    .card-dates dd {
+      margin: 0.25rem 0 0;
+      font-size: var(--step--1);
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding-top: 1rem;
+      border-top: 1px solid var(--clr-border);
+      font-size: var(--step--1);
+    }
+
+    .card-footer .footer-btn-container button {
+      font-size: var(--step--1);
     }
   `,
 ];
