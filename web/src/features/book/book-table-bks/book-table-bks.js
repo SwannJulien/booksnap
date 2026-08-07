@@ -6,10 +6,7 @@ import { formatGenre, formatBookMeta } from '../../../utils/bookFormatter.js';
 import '../../../components/dropdown-bks/dropdown-bks.js';
 import '../../copy/copy-table-bks/copy-table-bks.js';
 
-// Chips stay here rather than in utils/: the class names below only resolve against
-// .genre-chip-* in book-table-bks-styles.js, so they are not reusable across shadow
-// roots. The mock colours each genre differently; hashing the name keeps a genre on
-// the same colour from one card to the next without maintaining a genre → colour map.
+
 function getGenreChipClass(genre) {
   const hash = [...genre].reduce((sum, char) => sum + char.charCodeAt(0), 0);
   return `genre-chip-${hash % 4}`;
@@ -271,7 +268,7 @@ export class BookTableBks extends LitElement {
             : book.genres || ''}
         </td>
         <td>${book.yearRecommendation?.toUpperCase().replace('_', '-')}</td>
-        <td>${book.isbn10}</td>
+        <td>${book.isbn10 || book.isbn13}</td>
         <td>
           <div
             class="availability-container ${book.countCopies?.availableCopies >

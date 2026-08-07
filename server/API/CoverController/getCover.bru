@@ -18,3 +18,10 @@ settings {
   encodeUrl: true
   timeout: 0
 }
+
+docs {
+  Returns the stored cover image bytes, with the Content-Type it was uploaded with
+  and an ETag. Sending back that ETag as If-None-Match yields 304.
+
+  Returns 404 when no cover is stored for the ISBN.
+}

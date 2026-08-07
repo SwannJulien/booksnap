@@ -116,6 +116,13 @@ export const catalogView = [
       color: var(--clr-text-light);
     }
 
+    .update-modal-content .update-error {
+      margin-top: -1rem;
+      margin-bottom: 1.5rem;
+      color: var(--clr-warning);
+      font-size: var(--step--1);
+    }
+
     .update-modal-content .close-modal-btn {
       position: absolute;
       top: 1rem;

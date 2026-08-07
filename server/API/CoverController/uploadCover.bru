@@ -5,9 +5,13 @@ meta {
 }
 
 post {
-  url: {{vipa}}/api/v1/covers
+  url: {{vipa}}/api/v1/covers?isbn=0987654321
   body: file
   auth: inherit
+}
+
+params:query {
+  isbn: 0987654321
 }
 
 body:file {
@@ -17,4 +21,12 @@ body:file {
 settings {
   encodeUrl: true
   timeout: 0
+}
+
+docs {
+  Stores the request body as the cover for the given ISBN, in the `cover` table.
+  Re-posting the same ISBN replaces the stored image.
+
+  Returns 400 if the body is empty, larger than `booksnap.cover.max-size-bytes`
+  (2 MB by default), or sent with a non-image Content-Type.
 }

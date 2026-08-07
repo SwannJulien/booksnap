@@ -378,10 +378,11 @@ export class BookFormBks extends LitElement {
     // Get cover from cover-upload component
     const coverUpload = this.shadowRoot.getElementById('cover-upload');
     const cover = coverUpload ? coverUpload.getCover() : null;
+    const coverChanged = coverUpload ? coverUpload.hasNewCover() : false;
 
     this.dispatchEvent(
       new CustomEvent('book-submit', {
-        detail: { bookData, cover, mode: this.mode },
+        detail: { bookData, cover, coverChanged, mode: this.mode },
       }),
     );
   }

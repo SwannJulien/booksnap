@@ -1,0 +1,30 @@
+meta {
+  name: deleteCover
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{vipa}}/api/v1/covers/:isbn
+  body: none
+  auth: inherit
+}
+
+params:path {
+  isbn: 0099908409
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Removes the stored cover for an ISBN.
+
+  Idempotent: answers 204 whether or not a cover was there.
+
+  Covers are also removed automatically when the book they belong to is deleted, and
+  re-keyed when a book's ISBN changes — see BookServiceImpl. This endpoint is for
+  removing a cover on its own.
+}

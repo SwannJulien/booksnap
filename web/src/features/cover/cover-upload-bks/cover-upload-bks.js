@@ -174,6 +174,15 @@ export class CoverUploadBks extends LitElement {
   }
 
   /**
+   * Whether the user picked a new image during this session.
+   * When updating a book, `coverUrl` is the cover already stored for it, so this is
+   * what distinguishes "replace the cover" from "leave the existing one alone".
+   */
+  hasNewCover() {
+    return Boolean(this._file);
+  }
+
+  /**
    * Public method to reset the cover upload
    */
   reset() {

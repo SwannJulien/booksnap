@@ -34,6 +34,18 @@ export class CoverController {
     return url && url !== 'loading' ? url : null;
   }
 
+  /**
+   * Drops the cached cover for an ISBN so the next fetchForBooks re-fetches it.
+   * Needed after replacing a cover: the object URL still points at the old bytes.
+   */
+  invalidate(isbn) {
+    const url = this.urls.get(isbn);
+    if (url && url !== 'loading') {
+      URL.revokeObjectURL(url);
+    }
+    this.urls.delete(isbn);
+  }
+
   async _fetchCover(isbn) {
     if (this.urls.has(isbn)) return;
 
@@ -41,8 +53,7 @@ export class CoverController {
 
     try {
       const { blob } = await getCover(isbn);
-      const url = URL.createObjectURL(blob);
-      this.urls.set(isbn, url);
+      this.urls.set(isbn, blob ? URL.createObjectURL(blob) : null);
     } catch {
       this.urls.set(isbn, null);
     }

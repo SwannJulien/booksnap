@@ -30,6 +30,11 @@ export const createBookBksStyles = css`
     color: var(--clr-error, red);
   }
 
+  .cover-warning {
+    color: var(--clr-warning);
+    font-size: var(--step--1);
+  }
+
   .button-container {
     display: flex;
     gap: 1rem;
@@ -38,7 +43,8 @@ export const createBookBksStyles = css`
   }
 
   @media print {
-    .modal-success > *:not(.qr-code):not(p) {
+    .modal-success > *:not(.qr-code):not(p),
+    .cover-warning {
       display: none !important;
     }
 

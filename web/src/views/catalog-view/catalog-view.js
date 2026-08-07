@@ -6,10 +6,10 @@ import '../../components/button-bks/button-bks.js';
 import '../../components/search-bar-bks/search-bar-bks.js';
 import '../../features/book/book-form-bks/book-form-bks.js';
 import '../../features/book/book-table-bks/book-table-bks.js';
-import { getBooks, updateBook } from '../../api/book.js';
+import { getBooks } from '../../api/book.js';
 import { getBorrowingByCopyId } from '../../api/borrowing.js';
+import { BookService } from '../../api/bookService.js';
 import { toFormFormat } from '../../utils/bookMapper.js';
-import { mapBookFormData } from '../../utils/formDataMapper.js';
 import { SearchController } from '../../controllers/search-controller.js';
 import { CoverController } from '../../controllers/cover-controller.js';
 import '../../features/copy/copy-qr-modal-bks/copy-qr-modal-bks.js';
@@ -36,6 +36,7 @@ export class CatalogView extends LitElement {
     borrowingToReturn: { type: Object, state: true },
     bookToHold: { type: Object, state: true },
     showCreateModal: { type: Boolean, state: true },
+    updateError: { type: String, state: true },
   };
 
   _search = new SearchController(this, {
@@ -43,6 +44,9 @@ export class CatalogView extends LitElement {
   });
 
   _covers = new CoverController(this);
+
+  /** Primary ISBN of the book currently open in the update modal, before any edit */
+  _updateOriginalIsbn = null;
 
   constructor() {
     super();
@@ -57,6 +61,7 @@ export class CatalogView extends LitElement {
     this.borrowingToReturn = null;
     this.bookToHold = null;
     this.showCreateModal = false;
+    this.updateError = '';
   }
 
   booksTask = new Task(this, {
@@ -114,6 +119,9 @@ export class CatalogView extends LitElement {
             &times;
           </button>
           <h2 id="update-modal-title">Update Book</h2>
+          ${this.updateError
+            ? html`<p class="update-error">${this.updateError}</p>`
+            : ''}
           <book-form-bks
             mode="update"
             .book=${this.bookToUpdate}
@@ -233,11 +241,15 @@ export class CatalogView extends LitElement {
       coverUrl: isbn ? this._covers.get(isbn) : null,
     };
 
+    // Remembered so a changed ISBN can drop the cover cached under the old key
+    this._updateOriginalIsbn = isbn || null;
     this.bookToUpdate = toFormFormat(bookWithCover);
   }
 
   _handleUpdateModalClose() {
     this.bookToUpdate = null;
+    this.updateError = '';
+    this._updateOriginalIsbn = null;
   }
 
   get _createModalTpl() {
@@ -307,19 +319,41 @@ export class CatalogView extends LitElement {
   }
 
   async _handleUpdateSubmit(e) {
-    const { bookData } = e.detail;
-    const mappedData = mapBookFormData(bookData);
-    // TODO: remove hardcoded libraryId
-    mappedData.libraryId = 1;
+    const { bookData, cover, coverChanged } = e.detail;
+    this.updateError = '';
 
+    let result;
     try {
-      await updateBook(mappedData.id, mappedData);
-      this.bookToUpdate = null;
-      this._refreshList();
+      result = await BookService.updateBook(bookData, { cover, coverChanged });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to update book:', err);
+      this.updateError = 'The book could not be saved. Please try again.';
+      return;
     }
+
+    // The server moves the cover when the ISBN changes, so both keys are now stale
+    const previousIsbn = this._updateOriginalIsbn;
+    const isbnChanged = previousIsbn !== result.isbn;
+
+    if (previousIsbn && isbnChanged) {
+      this._covers.invalidate(previousIsbn);
+    }
+    if (result.isbn && (result.coverUpdated || isbnChanged)) {
+      // The cached object URL still points at the previous image
+      this._covers.invalidate(result.isbn);
+    }
+
+    if (result.coverError) {
+      // The book was saved; keep the modal open so the cover failure is visible
+      this.updateError = `The book was saved, but its cover was not updated — ${result.coverError}`;
+      this._refreshList();
+      return;
+    }
+
+    this.bookToUpdate = null;
+    this._updateOriginalIsbn = null;
+    this._refreshList();
   }
 
   _handleDeleteBook(book) {
@@ -331,6 +365,12 @@ export class CatalogView extends LitElement {
   }
 
   _handleBookDeleted() {
+    // The server drops the cover with the book, so the cached one is gone too
+    const isbn = this.bookToDelete?.isbn13 || this.bookToDelete?.isbn10;
+    if (isbn) {
+      this._covers.invalidate(isbn);
+    }
+
     this.bookToDelete = null;
     this._refreshList();
   }

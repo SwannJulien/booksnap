@@ -40,6 +40,13 @@ export const bookTableBksStyles = css`
     padding: 1.2rem;
   }
 
+  td {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   th:nth-child(1),
   td:nth-child(1) {
     width: 30%;

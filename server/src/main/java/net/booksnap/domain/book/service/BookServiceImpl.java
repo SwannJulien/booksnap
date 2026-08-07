@@ -18,6 +18,7 @@ import net.booksnap.domain.copy.api.dto.CountCopiesDTO;
 import net.booksnap.domain.copy.mapper.CopyApiMapper;
 import net.booksnap.domain.copy.repository.CopyRepository;
 import net.booksnap.domain.copy.Status;
+import net.booksnap.domain.cover.service.CoverService;
 import net.booksnap.exception.book.BookNotFoundException;
 import net.booksnap.exception.common.BadRequestException;
 import net.booksnap.exception.dewey.DeweyCodeNotFoundException;
@@ -29,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -45,19 +47,22 @@ public class BookServiceImpl implements BookService {
     private final CopyApiMapper copyApiMapper;
     private final QRCodeService qrCodeService;
     private final Utils utils;
+    private final CoverService coverService;
 
     public BookServiceImpl(BookRepository bookRepository,
                            BookApiMapper bookApiMapper,
                            CopyRepository copyRepository,
                            CopyApiMapper copyApiMapper,
                            QRCodeService qrCodeService,
-                           Utils utils) {
+                           Utils utils,
+                           CoverService coverService) {
         this.bookRepository = bookRepository;
         this.bookApiMapper = bookApiMapper;
         this.copyRepository = copyRepository;
         this.copyApiMapper = copyApiMapper;
         this.qrCodeService = qrCodeService;
         this.utils = utils;
+        this.coverService = coverService;
     }
     public CreateBookResponse addBook(CreateBookRequest createBookRequest) {
         try {
@@ -172,17 +177,29 @@ public class BookServiceImpl implements BookService {
         return new ListResponse<>(copyResponses);
     }
 
+    @Transactional
     public void deleteBookById(Long bookId) {
-        if (bookRepository.existsById(bookId)){
-            bookRepository.deleteById(bookId);
-        } else {
-            throw new BookNotFoundException(bookId);
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new BookNotFoundException(bookId));
+
+        // Read the cover key before the book is gone, and only drop the cover when no
+        // other book is keyed to it
+        String isbn = primaryIsbn(book);
+        boolean coverIsShared = isbn != null && bookRepository.countOtherBooksSharingIsbn(bookId, isbn) > 0;
+
+        bookRepository.deleteById(bookId);
+
+        if (isbn != null && !coverIsShared) {
+            coverService.deleteCoverImage(isbn);
         }
     }
 
+    @Transactional
     public void updateBook(Long bookId, CreateBookRequest request) {
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId));
+
+        String previousIsbn = primaryIsbn(book);
 
         // Update existing book properties instead of creating a new entity
         book.setTitle(request.title());
@@ -200,6 +217,31 @@ public class BookServiceImpl implements BookService {
         bookApiMapper.mapDeweyCategory(book, request);
 
         bookRepository.save(book);
+
+        followCover(bookId, previousIsbn, primaryIsbn(book));
+    }
+
+    private void followCover(Long bookId, String previousIsbn, String currentIsbn) {
+        if (previousIsbn == null || currentIsbn == null || previousIsbn.equals(currentIsbn)) {
+            return;
+        }
+
+        if (bookRepository.countOtherBooksSharingIsbn(bookId, previousIsbn) > 0) {
+            // Another book is still keyed to the old ISBN, so leave its cover in place
+            coverService.copyCoverImage(previousIsbn, currentIsbn);
+        } else {
+            coverService.moveCoverImage(previousIsbn, currentIsbn);
+        }
+    }
+
+    private static String primaryIsbn(Book book) {
+        if (book.getIsbn13() != null && !book.getIsbn13().isBlank()) {
+            return book.getIsbn13();
+        }
+        if (book.getIsbn10() != null && !book.getIsbn10().isBlank()) {
+            return book.getIsbn10();
+        }
+        return null;
     }
 
     public PagedResponse<BookResponse> searchBooks(BookSearchFilter filter, Pageable pageable) {

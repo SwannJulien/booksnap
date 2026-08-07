@@ -43,12 +43,12 @@ INSERT INTO book (isbn10, isbn13, title, publishing_year, publisher, number_of_p
 ('0393609391', '9780393609394', 'Astrophysics for People in a Hurry', 2017, 'W. W. Norton & Company', 224, 'ks_4', false, '520'),
 ('0142410314', '9780142410318', 'Charlie and the Chocolate Factory', 1964, 'Puffin Books', 176, 'ks_3', true, NULL),
 ('0062316117', '9780062316110', 'Sapiens: A Brief History of Humankind', 2015, 'Harper', 443, 'ks_4', false, '900'),
-('0062073486', '9780062073488', 'Murder on the Orient Express', 1934, 'William Morrow', 256, 'ks_4', true, NULL),
-('1501127624', '9781501127625', 'Leonardo da Vinci', 2017, 'Simon & Schuster', 624, 'ks_4', false, '920'),
-('0544003415', '9780544003415', 'The Hobbit', 1937, 'Mariner Books', 366, 'ks_3', true, NULL),
-('0465054749', '9780465054749', 'Seventeen Equations that Changed the World', 2012, 'Basic Books', 352, 'ks_4', false, '510'),
+('0062693662', '9780062693662', 'Murder on the Orient Express', 1934, 'William Morrow', 256, 'ks_4', true, NULL),
+('1501139150', '9781501139154', 'Leonardo da Vinci', 2017, 'Simon & Schuster', 624, 'ks_4', false, '920'),
+('0618968636', '9780618968633', 'The Hobbit', 1937, 'Mariner Books', 366, 'ks_3', true, NULL),
+('184668532X', '9781846685323', 'Seventeen Equations that Changed the World', 2012, 'Profile Books', 352, 'ks_4', false, '510'),
 ('0399226907', '9780399226908', 'The Very Hungry Caterpillar', 1969, 'Philomel Books', 26,'ks_1', true, NULL),
-('0062320041', '9780062320049', 'Life on Earth', 1979, 'HarperCollins', 319, 'ks_2', false, '570')
+('0002190915', '9780002190916', 'Life on Earth', 1979, 'HarperCollins', 319, 'ks_2', false, '570')
 ON CONFLICT DO NOTHING;
 
 -- Insert Genres (skip if already exists)

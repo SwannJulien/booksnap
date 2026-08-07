@@ -44,6 +44,16 @@ CREATE TABLE book (
     CHECK (is_fiction = false OR code_dewey IS NULL)
 );
 
+CREATE TABLE cover (
+	isbn VARCHAR(13) PRIMARY KEY,
+	image BYTEA NOT NULL,
+	content_type TEXT NOT NULL,
+	created_by TEXT,
+	created_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	last_modified_by TEXT,
+	last_modified_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE genre (
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	name CITEXT UNIQUE,

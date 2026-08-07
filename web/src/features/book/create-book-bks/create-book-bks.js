@@ -14,6 +14,7 @@ export class CreateBookBks extends LitElement {
     _modalData: { type: Object, state: true },
     _sectionName: { type: String, state: true },
     _bookTitle: { type: String, state: true },
+    _coverError: { type: String, state: true },
   };
 
   constructor() {
@@ -23,6 +24,7 @@ export class CreateBookBks extends LitElement {
     this._modalData = null;
     this._sectionName = '';
     this._bookTitle = '';
+    this._coverError = '';
   }
 
   render() {
@@ -37,6 +39,7 @@ export class CreateBookBks extends LitElement {
     try {
       const response = await BookService.createBook(bookData, cover);
       this._bookTitle = bookData.title || '';
+      this._coverError = response.coverError || '';
 
       if (response.status === 201) {
         this._modalType = 'success';
@@ -88,6 +91,11 @@ export class CreateBookBks extends LitElement {
         />
         <p>${this._bookTitle}</p>
         <p>${this._modalData?.identificationCode}</p>
+        ${this._coverError
+          ? html`<p class="cover-warning">
+              The book was created, but its cover could not be saved.
+            </p>`
+          : ''}
         <button-bks
           class="print-btn"
           label="Print QR Code"

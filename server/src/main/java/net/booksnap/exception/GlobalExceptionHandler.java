@@ -8,6 +8,7 @@ import net.booksnap.exception.borrowing.BorrowingNotFoundException;
 import net.booksnap.exception.common.BadRequestException;
 import net.booksnap.exception.copy.CopyNotAvailableException;
 import net.booksnap.exception.copy.CopyNotFoundException;
+import net.booksnap.exception.cover.CoverNotFoundException;
 import net.booksnap.exception.dewey.DeweyCodeNotFoundException;
 import net.booksnap.exception.dewey.FictionBookHasDeweyCodeException;
 import net.booksnap.exception.hold.BookHasAvailableCopyException;
@@ -106,6 +107,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CopyNotFoundException.class)
     public ResponseEntity<ApiError> handleCopyNotFound(CopyNotFoundException ex, HttpServletRequest request) {
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(CoverNotFoundException.class)
+    public ResponseEntity<ApiError> handleCoverNotFound(CoverNotFoundException ex, HttpServletRequest request) {
         ApiError error = new ApiError(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
