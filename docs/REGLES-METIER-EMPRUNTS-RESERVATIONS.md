@@ -266,12 +266,21 @@ stateDiagram-v2
 
 ## 7. Constantes de temps
 
-| Constante | Valeur | Où |
-|---|---|---|
-| Durée d'un emprunt | **2 semaines** | `BorrowingServiceImpl.BORROWING_DURATION_WEEKS` |
-| Fenêtre de retrait d'une réservation `active` | **1 semaine** | `BorrowingServiceImpl.HOLD_PICKUP_WINDOW_WEEKS` |
-| Expiration d'une réservation `pending` sans copie | **5 semaines** *(défini)* | CLAUDE.md — *non branché* |
-| Passage en retard | quotidien 00:05 + au démarrage | `OverdueBorrowingScheduler` |
+> ⚠️ **Ces constantes ont vocation à devenir des paramètres configurables.**
+> Voir [règles paramètres](REGLES-METIER-PARAMETRES.md) et la
+> [phase 3 du plan](implementation/phase-3-parametres-durees/) : elles seront
+> résolues « surcharge de la bibliothèque, sinon défaut global », et exprimées
+> **en jours** plutôt qu'en semaines.
+>
+> Règle associée : **un changement de paramètre ne réécrit jamais un emprunt en
+> cours.** La `end_date` est figée à la création.
+
+| Constante | Valeur | Où | Devient |
+|---|---|---|---|
+| Durée d'un emprunt | **2 semaines** | `BorrowingServiceImpl.BORROWING_DURATION_WEEKS` | Paramètre |
+| Fenêtre de retrait d'une réservation `active` | **1 semaine** | `BorrowingServiceImpl.HOLD_PICKUP_WINDOW_WEEKS` | Paramètre |
+| Expiration d'une réservation `pending` sans copie | **5 semaines** *(défini)* | CLAUDE.md — *non branché* | Paramètre + `hold.expires_at` |
+| Passage en retard | quotidien 00:05 + au démarrage | `OverdueBorrowingScheduler` | Inchangé |
 
 ---
 
@@ -294,3 +303,22 @@ stateDiagram-v2
 - **Notifications** (`hold_ready`, `hold_expired`, `overdue_reminder`…) : type
   `notification` et table présents, mais l'envoi est un `TODO` dans le code
   (`NotificationService` inexistant).
+
+**Quand ce sera branché :**
+
+| Sujet | Phase |
+|---|---|
+| Scheduler d'expiration des réservations | [Phase 3](implementation/phase-3-parametres-durees/) |
+| Couche SMTP (prérequis des notifications) | [Phase 4](implementation/phase-4-gestion-utilisateurs/) |
+| Prolongation d'un emprunt, suspension après retard | [Phase 6](implementation/phase-6-limites-renouvellements-penalites/) |
+
+---
+
+## 9. Documents liés
+
+| Document | Objet |
+|---|---|
+| [Règles d'accès](REGLES-METIER-ACCES.md) | Qui a le droit d'emprunter, de rendre, de réserver — et pour qui |
+| [Règles des paramètres](REGLES-METIER-PARAMETRES.md) | Les durées de §7 une fois devenues configurables |
+| [Règles structurelles](REGLES-METIER-STRUCTURE.md) | Les contraintes de base qui sous-tendent §5 : cascades, clés étrangères, index partiels |
+| [Décisions multi-utilisateur](DECISIONS-MULTI-UTILISATEUR.md) | Les arbitrages retenus et leur pourquoi |
