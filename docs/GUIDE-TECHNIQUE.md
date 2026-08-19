@@ -21,6 +21,7 @@
       - [Terminal 2 - Backend](#terminal-2---backend)
       - [Terminal 3 - Frontend](#terminal-3---frontend)
       - [Avantages de cette approche](#avantages-de-cette-approche)
+    - [Charger les fixtures de développement](#charger-les-fixtures-de-développement)
     - [Option 2 : Tout en Docker (Simulation Production)](#option-2--tout-en-docker-simulation-production)
       - [Quand utiliser cette option ?](#quand-utiliser-cette-option-)
     - [Comparaison des Approches](#comparaison-des-approches)
@@ -81,7 +82,9 @@ cp .env.example .env
 # 3. Lancer tous les services
 docker compose up --build
 
-# L'application est prête !
+# Le schéma est créé automatiquement par Flyway au démarrage du backend.
+# La base est vide : voir "Charger les fixtures de développement" ci-dessous
+# pour la peupler.
 ```
 
 ### URLs des services
@@ -128,8 +131,8 @@ docker compose up --build
 │   └─────────────┘     └─────────────┘     └─────────────┘      │
 │         ▲                   ▲                   ▲               │
 │         │                   │                   │               │
-│   docker compose       mvn spring-boot:run   npm run dev       │
-│   up db                    ou IDE              (Vite)          │
+│   docker compose         IntelliJ IDEA       npm run dev       │
+│   up db                  (Run/Debug)           (Vite)          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -147,14 +150,13 @@ docker compose up db pgadmin
 
 #### Terminal 2 - Backend
 
-Lancer depuis **IntelliJ IDEA** (voir [Configuration IDE](#configuration-ide)) ou en ligne de commande :
+Lancer **depuis IntelliJ IDEA** (voir [Configuration IDE](#configuration-ide)) — pas en
+ligne de commande : il n'y a ni Maven sur le PATH ni wrapper `mvnw` dans `server/`.
 
-```bash
-cd server
-mvn spring-boot:run
-```
-
-> **Note** : Les variables d'environnement (`DB_HOST`, `POSTGRES_USER`, etc.) doivent être configurées dans votre IDE ou exportées dans le terminal. Voir la section [Configuration IDE](#configuration-ide).
+> **Note** : Les variables d'environnement (`DB_HOST`, `POSTGRES_USER`, etc.) doivent être configurées dans votre IDE. Voir la section [Configuration IDE](#configuration-ide).
+>
+> C'est ce démarrage-là, depuis l'IDE, qui joue les migrations Flyway
+> (`server/src/main/resources/db/migration`) et crée le schéma.
 
 #### Terminal 3 - Frontend
 ```bash
@@ -171,9 +173,36 @@ npm run dev
 
 #### Avantages de cette approche
 - DB isolée et réinitialisable (`docker compose down -v`)
-- Scripts SQL auto-exécutés (schema, dewey, seed)
+- Schéma créé automatiquement par Flyway au premier démarrage du backend
 - pgAdmin disponible pour debug
 - Hot Reload complet (frontend ET backend)
+
+---
+
+### Charger les fixtures de développement
+
+Contrairement à l'ancien `schema.sql`/`dewey.sql`/`seed.sql` monté dans
+`/docker-entrypoint-initdb.d/`, **rien ne peuple la base automatiquement**. Le
+volume `booksnap-db-data` démarre vide ; Flyway construit le schéma au premier
+démarrage du backend, puis les fixtures se chargent à la main :
+
+```bash
+# Une fois le backend démarré au moins une fois sur un volume neuf
+server/scripts/load-dev-fixtures.sh
+```
+
+Pour revenir à l'état des fixtures après avoir sali les données (sans toucher
+au schéma ni au volume) :
+
+```bash
+server/scripts/reset-dev-db.sh
+```
+
+`reset-dev-db.sh` vide les tables métier, recharge les données de référence
+Dewey depuis `V2__dewey_reference_data.sql`, puis rejoue `seed.sql` et
+`covers.sql`. Ne pas jouer `server/sql/reset.sql` seul — il ne vide ni Dewey ni
+`cover`, ce que `reset-dev-db.sh` gère. Les deux scripts acceptent
+`--database NOM` et `--yes`.
 
 ---
 
@@ -200,7 +229,7 @@ docker compose up --build
 | **Hot Reload** | Complet | Limité |
 | **Proche production** | Moyen | Excellent |
 | **Setup initial** | Simple | Très simple |
-| **Reset DB** | `down -v && up` | `down -v && up` |
+| **Reset DB** | `reset-dev-db.sh` (données) ou `down -v` (volume) | `down -v && up` |
 
 ---
 
@@ -270,10 +299,15 @@ booksnap/
 ├── .env.example            # Template des variables d'environnement
 ├── server/
 │   ├── Dockerfile          # Build backend (Maven → JAR → JRE)
-│   └── sql/                # Scripts d'initialisation DB
-│       ├── schema.sql      # Structure des tables
-│       ├── dewey.sql       # Classification Dewey
-│       └── seed.sql        # Données initiales
+│   ├── src/main/resources/db/migration/  # Migrations Flyway (schéma, source de vérité)
+│   │   ├── V1__baseline_schema.sql
+│   │   ├── V2__dewey_reference_data.sql
+│   │   ├── V3__drop_orphan_enum_types.sql
+│   │   └── V4__users_email_citext.sql
+│   └── sql/                # Scripts de développement, joués à la main
+│       ├── seed.sql        # Données de démonstration
+│       ├── covers.sql      # Couvertures des livres seedés
+│       └── reset.sql       # Vidage des tables métier (via reset-dev-db.sh)
 └── web/
     ├── Dockerfile          # Build frontend (npm → Vite → Nginx)
     └── nginx.conf          # Configuration serveur web
@@ -547,9 +581,13 @@ docker compose ps
 
 ### Commandes Backend (Maven)
 
-```bash
-cd server
+> Il n'y a **ni Maven sur le PATH ni wrapper `mvnw`** dans `server/` — ces
+> commandes ne sont pas exécutables telles quelles depuis ce shell. Lancer et
+> tester le backend **depuis IntelliJ IDEA** (voir
+> [Configuration IDE](#configuration-ide)). Elles restent utiles pour se
+> repérer dans les runs/configurations équivalentes côté IDE.
 
+```bash
 # Lancer l'application
 mvn spring-boot:run
 
@@ -595,14 +633,22 @@ npm run lint
 ```bash
 # DEV QUOTIDIEN
 docker compose up db          # Terminal 1
-mvn spring-boot:run           # Terminal 2 (server/)
+# Backend : lancer depuis IntelliJ IDEA (pas de mvn/mvnw en CLI) — Terminal 2
 npm run dev                   # Terminal 3 (web/)
+
+# Première fois sur un volume neuf : charger les fixtures une fois le backend démarré
+server/scripts/load-dev-fixtures.sh
 
 # TEST INTÉGRATION
 docker compose up --build
 
-# RESET DB
+# RESET DES DONNÉES (garde le schéma et le volume)
+server/scripts/reset-dev-db.sh
+
+# RESET COMPLET (supprime le volume ; il faut ensuite redémarrer le backend
+# pour rejouer les migrations, puis recharger les fixtures)
 docker compose down -v && docker compose up db
+server/scripts/load-dev-fixtures.sh
 
 # LOGS
 docker compose logs -f backend

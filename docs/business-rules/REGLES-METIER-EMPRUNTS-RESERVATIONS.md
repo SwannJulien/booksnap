@@ -28,7 +28,7 @@ est essentiel :**
 
 | Mécanisme | Rôle | Où |
 |---|---|---|
-| **Triggers PostgreSQL** | Maintiennent `copy.status` en réaction aux écritures sur `borrowing` et `hold`. `copy.status` **n'est jamais écrit par le code applicatif** (sauf action manuelle « Update status »). | `sql/schema.sql` |
+| **Triggers PostgreSQL** | Maintiennent `copy.status` en réaction aux écritures sur `borrowing` et `hold`. `copy.status` **n'est jamais écrit par le code applicatif** (sauf action manuelle « Update status »). | `V1__baseline_schema.sql` |
 | **Couche service** | Porte les règles métier : conditions de prêt, retour, et **promotion** d'une réservation (car elle envoie aussi une notification). | `BorrowingServiceImpl`, `HoldServiceImpl` |
 | **Scheduler** | Transitions basées sur le temps (passage en retard). | `OverdueBorrowingScheduler` |
 
@@ -203,7 +203,7 @@ stateDiagram-v2
 ## 5. Synchronisation de `copy.status` (les triggers)
 
 `copy.status` est maintenu **exclusivement** par des triggers en réaction aux
-écritures sur `borrowing` et `hold`. Résumé des 4 règles (`sql/schema.sql`) :
+écritures sur `borrowing` et `hold`. Résumé des 4 règles (`V1__baseline_schema.sql`) :
 
 | # | Événement | Effet sur `copy.status` |
 |---|---|---|

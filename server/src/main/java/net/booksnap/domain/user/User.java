@@ -29,7 +29,7 @@ public class User extends Auditable {
     @Column(name = "is_super")
     private Boolean isSuper;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, columnDefinition = "email")
     @Email
     @NotNull
     private String email;

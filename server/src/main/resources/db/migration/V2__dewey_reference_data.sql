@@ -1,3 +1,21 @@
+-- =============================================================================
+-- V2 — Données de référence Dewey
+-- =============================================================================
+-- Reprise à l'identique de server/sql/dewey.sql. Ce sont des données de
+-- RÉFÉRENCE (la classification décimale de Dewey, invariante), pas des données
+-- de développement : elles font partie du schéma fonctionnel et doivent exister
+-- dans toute base, y compris en production.
+--
+-- server/sql/seed.sql reste délibérément hors migrations : livres, élèves et
+-- emprunts fictifs n'ont rien à faire ailleurs qu'en développement.
+--
+-- La base en service contient déjà ces données : `baseline-version=2` fait que
+-- cette migration n'y est pas rejouée. Elle ne s'exécute que sur une base
+-- vierge.
+--
+-- NE JAMAIS MODIFIER CE FICHIER — checksum Flyway.
+-- =============================================================================
+
 -- Class level: 0-10
 INSERT INTO dewey_class (code, name) VALUES
 ('000', 'Computer science, information, and general works'),

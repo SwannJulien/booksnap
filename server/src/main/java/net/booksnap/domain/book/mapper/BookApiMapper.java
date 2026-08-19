@@ -53,9 +53,9 @@ public abstract class BookApiMapper {
         if(request.genres() != null && !request.genres().isEmpty()) {
             Set<Genre> genreEntities = request.genres().stream()
                     .map(name -> {
-                        String normalized = name.trim().toLowerCase();
-                        return genreRepository.findByName(normalized)
-                                .orElseGet(() -> genreRepository.save(new Genre(null, normalized, new HashSet<>())));
+                        String trimmed = name.trim();
+                        return genreRepository.findByName(trimmed)
+                                .orElseGet(() -> genreRepository.save(new Genre(null, trimmed, new HashSet<>())));
                     })
                     .collect(Collectors.toSet());
 
@@ -68,45 +68,14 @@ public abstract class BookApiMapper {
         if(request.authors() != null && !request.authors().isEmpty()) {
             Set<Author> authorEntities = request.authors().stream()
                     .map(name -> {
-                        String normalized = normalizeToTitleCase(name.trim());
-                        return authorRepository.findByName(normalized)
-                                .orElseGet(() -> authorRepository.save(new Author(null, normalized, new HashSet<>())));
+                        String trimmed = name.trim();
+                        return authorRepository.findByName(trimmed)
+                                .orElseGet(() -> authorRepository.save(new Author(null, trimmed, new HashSet<>())));
                     })
                     .collect(Collectors.toSet());
 
             book.setAuthors(authorEntities);
         }
-    }
-
-    /**
-     * Normalizes a name to title case (e.g., "john doe" -> "John Doe", "JOHN DOE" -> "John Doe")
-     * Handles multiple words separated by spaces.
-     */
-    private String normalizeToTitleCase(String name) {
-        if (name == null || name.isEmpty()) {
-            return name;
-        }
-
-        String[] words = name.split("\\s+");
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < words.length; i++) {
-            String word = words[i];
-            if (word.length() > 0) {
-                // Capitalize first letter, lowercase the rest
-                result.append(Character.toUpperCase(word.charAt(0)));
-                if (word.length() > 1) {
-                    result.append(word.substring(1).toLowerCase());
-                }
-
-                // Add space between words (except after the last word)
-                if (i < words.length - 1) {
-                    result.append(" ");
-                }
-            }
-        }
-
-        return result.toString();
     }
 
     @AfterMapping

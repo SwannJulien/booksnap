@@ -25,7 +25,7 @@ public class Author extends Auditable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, columnDefinition = "citext")
     private String name;
 
     @ManyToMany(mappedBy = "authors")

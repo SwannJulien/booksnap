@@ -26,11 +26,19 @@ services:
       # Data persistence
       - db-data:/var/lib/postgresql/data
 
-      # Auto-init SQL (executed in alphabetical order on first startup)
-      - ./server/sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./server/sql/dewey.sql:/docker-entrypoint-initdb.d/02-dewey.sql:ro
-      - ./server/sql/seed.sql:/docker-entrypoint-initdb.d/03-seed.sql:ro
-      - ./server/sql/covers.sql:/docker-entrypoint-initdb.d/04-covers.sql:ro
+      # NO auto-init SQL. The schema and the Dewey reference data are owned by
+      # Flyway (server/src/main/resources/db/migration), applied when the
+      # backend starts. Mounting sql/ into /docker-entrypoint-initdb.d/ here
+      # would build a second, unversioned schema on a fresh volume — and it
+      # would run *before* the backend exists, so seed.sql would hit tables
+      # that have not been created yet.
+      #
+      # Development fixtures are loaded by hand, once the backend has started
+      # at least once against the fresh volume:
+      #   docker exec -i booksnap-postgres sh -c \
+      #     'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < server/sql/seed.sql
+      #   docker exec -i booksnap-postgres sh -c \
+      #     'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < server/sql/covers.sql
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
