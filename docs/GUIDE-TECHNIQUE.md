@@ -14,6 +14,8 @@
     - [URLs des services](#urls-des-services)
     - [Connexion à la base de données via pgAdmin](#connexion-à-la-base-de-données-via-pgadmin)
       - [Depuis pgAdmin Docker (par défaut)](#depuis-pgadmin-docker-par-défaut)
+      - [Depuis un client sur l'hôte](#depuis-un-client-sur-lhôte-dbeaver-psql-pgadmin-installé-localement)
+      - [Si la connexion échoue](#si-la-connexion-échoue)
   - [2. Développement Local](#2-développement-local)
     - [Workflow Recommandé : Hybride](#workflow-recommandé--hybride)
     - [Option 1 : DB Docker + Code Local (Recommandé)](#option-1--db-docker--code-local-recommandé)
@@ -97,22 +99,80 @@ docker compose up --build
 
 ### Connexion à la base de données via pgAdmin
 
-1. Ouvrir pgAdmin : http://localhost:5050
-2. Clic droit sur "Servers" → "Register" → "Server..."
-3. Configurer la connexion :
+> **Trois mots de passe différents** interviennent ici. Les confondre est de loin
+> l'erreur la plus fréquente :
+>
+> | Étape | Identifiants | Source |
+> |-------|--------------|--------|
+> | 1. Se connecter à l'UI pgAdmin | `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` | `.env` |
+> | 2. *Master password* pgAdmin | choisi par vous au tout premier lancement | à mémoriser |
+> | 3. Se connecter au serveur PostgreSQL | `POSTGRES_USER` / `POSTGRES_PASSWORD` | `.env` |
+>
+> L'étape 3 n'accepte **ni** le mot de passe pgAdmin de l'étape 1, **ni** le master
+> password de l'étape 2, **ni** les valeurs de `.env.example` (`changeme…`) : c'est
+> `POSTGRES_PASSWORD` tel qu'il est dans **votre** `.env`.
+
+1. Lancer les services : `docker compose up -d db pgadmin`
+2. Ouvrir pgAdmin : http://localhost:5050 (port = `PGADMIN_PORT`)
+3. Se connecter avec `PGADMIN_DEFAULT_EMAIL` / `PGADMIN_DEFAULT_PASSWORD` (`.env`)
+4. Au premier lancement, pgAdmin demande de définir un **master password** : il chiffre
+   les mots de passe de connexion enregistrés, il est local à pgAdmin et n'a aucun
+   rapport avec PostgreSQL
+5. Clic droit sur "Servers" → "Register" → "Server..."
+6. Configurer la connexion :
 
 #### Depuis pgAdmin Docker (par défaut)
+
+pgAdmin tourne **dans** le réseau `booksnap-network` : il joint PostgreSQL par son nom
+de service `db` sur le port **interne** 5432, pas par le port publié sur l'hôte.
 
 | Onglet | Champ | Valeur |
 |--------|-------|--------|
 | **General** | Name | `booksnap` (ou autre nom de votre choix) |
 | **Connection** | Host name/address | `db` |
 | **Connection** | Port | `5432` |
-| **Connection** | Maintenance database | `booksnap_db` |
-| **Connection** | Username | `booksnap` |
-| **Connection** | Password | (voir `POSTGRES_PASSWORD` dans `.env`) |
+| **Connection** | Maintenance database | `booksnap_db` (= `POSTGRES_DB`) |
+| **Connection** | Username | `booksnap` (= `POSTGRES_USER`) |
+| **Connection** | Password | valeur de `POSTGRES_PASSWORD` dans `.env` |
 
-> **Note** : Le port interne Docker est toujours 5432, mais il est mappé sur le port externe défini par `DB_PORT` dans `.env`.
+> **Attention** : depuis ce conteneur, `localhost` désigne *pgAdmin lui-même*, pas la
+> base. Utiliser `db`.
+
+#### Depuis un client sur l'hôte (DBeaver, psql, pgAdmin installé localement)
+
+Là c'est l'inverse : on passe par le port publié, celui de `DB_PORT` dans `.env`
+(**5433** dans la configuration locale actuelle, pas 5432).
+
+| Champ | Valeur |
+|-------|--------|
+| Host | `localhost` |
+| Port | `${DB_PORT}` de `.env` |
+| Database / User / Password | idem tableau ci-dessus |
+
+```bash
+# Vérifier les identifiants sans passer par une UI
+docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" booksnap-postgres \
+  psql -h db -U booksnap -d booksnap_db -c 'select current_user'
+```
+
+> Le `-h db` n'est pas décoratif : sans lui, `psql` passe par la socket Unix, que
+> `pg_hba.conf` accepte en `trust`. La connexion réussit alors **même avec un mauvais
+> mot de passe** et ne prouve rien.
+
+#### Si la connexion échoue
+
+| Symptôme | Cause | Correctif |
+|----------|-------|-----------|
+| `password authentication failed for user "booksnap"` (HTTP 401 dans les logs pgAdmin) | mauvais mot de passe saisi à l'étape 3 | reprendre `POSTGRES_PASSWORD` dans `.env` |
+| Idem, alors que `.env` semble correct | le volume `booksnap-db-data` a été initialisé avec un **ancien** mot de passe — `POSTGRES_PASSWORD` n'agit qu'au tout premier démarrage sur un volume neuf | `ALTER USER booksnap PASSWORD '…';` ou `docker compose down -v` (perd les données) |
+| `could not translate host name "db"` | client hors du réseau Docker | utiliser `localhost` + `DB_PORT` |
+| `Connection refused` sur `localhost:5432` | le port publié est `DB_PORT` (5433) | corriger le port |
+| Le serveur enregistré a disparu | le service `pgadmin` n'a pas de volume : `docker compose down` efface `/var/lib/pgadmin` | ré-enregistrer, ou ajouter un volume au service |
+
+```bash
+# Voir l'erreur exacte renvoyée par PostgreSQL
+docker logs --tail 30 booksnap-pgadmin
+```
 
 ---
 
@@ -271,14 +331,17 @@ docker compose up --build
 #### IntelliJ IDEA (Backend)
 
 1. Ouvrir le dossier `server/` comme projet Maven
-2. Configurer les variables d'environnement :
+2. Configurer les variables d'environnement de la Run Configuration. **Reprendre les
+   valeurs de votre `.env`**, ne pas recopier celles ci-dessous à l'aveugle :
    ```
    DB_HOST=localhost
-   DB_PORT=5432
+   DB_PORT=5433          # = DB_PORT dans .env : le port publié sur l'hôte, pas 5432
    POSTGRES_USER=booksnap
-   POSTGRES_PASSWORD=changeme
+   POSTGRES_PASSWORD=…   # = POSTGRES_PASSWORD dans .env
    POSTGRES_DB=booksnap_db
    ```
+   Le backend lancé depuis l'IDE tourne **hors** de Docker : il joint la base par
+   `localhost:${DB_PORT}`, contrairement au conteneur `backend` qui utilise `db:5432`.
 3. Lancer `BooksnapApplication.java` avec le bouton Run
 
 #### VS Code (Frontend)
@@ -303,7 +366,8 @@ booksnap/
 │   │   ├── V1__baseline_schema.sql
 │   │   ├── V2__dewey_reference_data.sql
 │   │   ├── V3__drop_orphan_enum_types.sql
-│   │   └── V4__users_email_citext.sql
+│   │   ├── V4__users_email_citext.sql
+│   │   └── V5__auth_identity.sql
 │   └── sql/                # Scripts de développement, joués à la main
 │       ├── seed.sql        # Données de démonstration
 │       ├── covers.sql      # Couvertures des livres seedés
@@ -657,4 +721,4 @@ docker compose logs -f frontend
 
 ---
 
-**Dernière mise à jour** : 2026-07-14
+**Dernière mise à jour** : 2026-08-20
