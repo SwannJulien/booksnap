@@ -10,18 +10,17 @@
 
 ---
 
-## 🚧 Brouillon — à valider en jouant les parcours
+## État
 
-Cette version a été **rédigée depuis le code**, pas depuis l'écran. Les
-périmètres (« Exerce ») sont fiables : ils viennent du graphe d'imports. Ce qui
-est décrit à l'écran ne l'est pas encore.
+**Jouée intégralement le 2026-08-22**, sur le front encore entièrement en
+JavaScript, avant la conversion du moindre fichier. Les douze parcours ont été
+exécutés à la main et observés conformes à ce qui est décrit ici.
 
-Les points marqués **[?]** sont des inférences à confirmer ou corriger en
-jouant le parcours : libellés de boutons, présence d'une pagination, texte
-exact d'un message d'erreur. **Retirer le marqueur une fois vérifié**, et
-retirer cette section quand il n'en reste plus.
+Une seule exception, signalée sur place : le cas de la copie `damaged` de
+[R-07](#r-07--prêt-puis-retour), que les fixtures ne permettent pas d'atteindre.
 
-Tant qu'un parcours porte un **[?]**, il ne vaut pas comme référence.
+Les messages cités entre `>` sont des **relevés à l'écran**, pas des
+reformulations. Ils se comparent au caractère près.
 
 ---
 
@@ -102,8 +101,8 @@ sont des **placeholders** d'une quinzaine de lignes — `home`, `analytics`,
 - L'entrée cliquée reçoit la classe `active`, et **une seule à la fois** — le
   routeur retire la classe de toutes les entrées avant de la poser.
 - Le retour arrière remet la vue précédente **et** l'`active` correspondante.
-- Un rechargement direct sur `/catalog` affiche bien le catalogue **[?]**.
-- Une URL inconnue tombe sur la route `(.*)` **[?] — vérifier ce qu'elle affiche.**
+- Un rechargement direct sur `/catalog` affiche bien le catalogue.
+- Une URL inconnue tombe sur la route `(.*)`
 
 > Les vues `/add`, `/catalog`, `/borrowings`, `/scan` sont chargées en
 > `import()` dynamique par le routeur. Un premier affichage légèrement différé
@@ -122,7 +121,7 @@ sont des **placeholders** d'une quinzaine de lignes — `home`, `analytics`,
 3. Taper `fan` dans le champ genre, attendre, choisir une proposition.
 4. Choisir `Available` dans le filtre de disponibilité.
 5. Effacer le genre avec sa croix, puis la disponibilité avec la sienne.
-6. Parcourir les pages **[?] — confirmer la forme de la pagination.**
+6. Parcourir les pages. La pagination montre corrèctement les livres des pages suivantes.
 
 **On observe :**
 - La recherche est **débouncée** : la liste ne se rafraîchit pas à chaque frappe.
@@ -134,7 +133,7 @@ sont des **placeholders** d'une quinzaine de lignes — `home`, `analytics`,
 - Effacer un filtre relance la recherche et élargit les résultats.
 - Le filtre de disponibilité est peuplé par l'API (`available`, `borrowed`,
   `on_hold`), affiché en clair — `On hold`, pas `on_hold`.
-- Les couvertures se chargent après les lignes, sans décaler la liste **[?]**.
+- Les couvertures se chargent après les lignes, sans décaler la liste.
 
 > ⚠️ Point de vigilance connu : le `select[name='availability']` a déjà été
 > cassé **deux fois** par l'ordre de `sharedStyles` dans `static styles`. Si sa
@@ -159,9 +158,8 @@ sont des **placeholders** d'une quinzaine de lignes — `home`, `analytics`,
 - Un `spinner-bks` pendant l'appel à OpenLibrary.
 - Le formulaire se **pré-remplit** : titre, auteur, et ce qu'OpenLibrary
   renvoie. Les champs restent modifiables.
-- La couverture OpenLibrary s'affiche en aperçu **[?]**.
-- Un ISBN inconnu d'OpenLibrary laisse le formulaire vide et affiche un message
-  plutôt qu'une erreur silencieuse **[?] — noter le message exact.**
+- La couverture OpenLibrary s'affiche en aperçu.
+- Un ISBN inconnu d'OpenLibrary laisse le formulaire vide et n'affiche aucun message, laissant l'utilisateur dans l'inconnue.
 - Après création, le livre est retrouvable dans le catalogue.
 
 ---
@@ -186,8 +184,8 @@ classes → divisions d'une classe → catégories d'une division.
 - Les divisions ne sont chargées **qu'après** le choix d'une classe, et les
   catégories qu'après le choix d'une division.
 - Le sélecteur de division est vide ou désactivé tant qu'aucune classe n'est
-  choisie **[?]**.
-- **Changer la classe réinitialise division et catégorie** — c'est le point qui
+  choisie.
+- Changer la classe enlève le selecteur de catégorie. Il n'apparait plus àa l'écran. Et le sélecteur de division affiche la division mère c'est à dire la même que la classe. C'est le point qui
   casse le plus facilement. Vérifier qu'aucune valeur périmée ne subsiste.
 - Le livre créé porte bien le code Dewey complet.
 - Les noms d'auteur sont enregistrés **tels que saisis** : la casse n'est plus
@@ -218,8 +216,11 @@ Les actions de ligne passent par un `dropdown-bks` qui émet
   casserait en silence.
 - Annuler la suppression referme la modale et **ne supprime rien**.
 - Après confirmation, la ligne disparaît du tableau.
-- Supprimer un livre qui a des copies : **[?] — vérifier si c'est refusé, et
-  avec quel message.**
+- Supprimer un livre qui a des copies. Il est possible de supprimer un livre qui à des copies. Un message d'alerte est présenté: "Are you sure you want to delete 'Harry Potter and the Sorcerer's Stone'?
+
+This action cannot be undone.
+
+All 1 associated copies will be permanently removed from the library system."
 
 ---
 
@@ -229,7 +230,7 @@ Les actions de ligne passent par un `dropdown-bks` qui émet
 `features/copy/copy-section-modal-bks`, `features/copy/copy-qr-modal-bks`,
 `features/copy/delete-copy-modal-bks`, `api/copy`, `components/modal-bks`
 
-1. Sur `/catalog`, déplier les copies d'un livre **[?] — noter comment.**
+1. Sur `/catalog`, déplier les copies d'un livre en clickant sur le bouton arrow down en las Actions
 2. Créer une copie.
 3. Changer sa section.
 4. Afficher son QR code.
@@ -241,7 +242,7 @@ Les actions de ligne passent par un `dropdown-bks` qui émet
 - Le QR code s'affiche dans une modale et est **lisible** — c'est lui que R-09
   scannera.
 - La suppression demande confirmation, puis retire la ligne.
-- Une copie `borrowed` ne peut pas être supprimée **[?] — vérifier.**
+- Une copie `borrowed` ne peut pas être supprimée. Mais aucun message ne l'indique. La modale de confirmation de suppression s'ouvre. On click sur supprimer. La modale se ferme. Mais la copie est toujours là même après avoir fais un refresh de la page. Par contre, on peut supprimer correctemennt un livre dont ses copies sont Borrowed.
 
 ---
 
@@ -266,13 +267,17 @@ Les actions de ligne passent par un `dropdown-bks` qui émet
   nom de l'élève apparaît dans la colonne.**
 - Sur `/borrowings`, le prêt figure avec sa date d'échéance, **formatée** — pas
   un ISO brut. C'est `utils/dateFormatter`.
-- Un prêt en retard est distingué visuellement des prêts à l'heure
-  (`overdue` vs `borrowed`) **[?] — noter comment.**
+- Un prêt en retard porte un **badge rouge `Late(N days)`** — `N` étant le
+  nombre de jours de retard — et **sa date d'échéance s'affiche en rouge**.
+  Les prêts à l'heure n'ont ni badge ni date colorée : c'est le contraste qui
+  se vérifie, pas le badge seul.
 - Après le retour, la copie **redevient `available`** — écrit par un trigger, pas
   par le front.
 - Une copie `damaged` avant le prêt **reste `damaged`** après le retour
-  (`borrowing.pre_borrow_copy_status`). À vérifier si une copie abîmée est
-  disponible dans les fixtures.
+  (`borrowing.pre_borrow_copy_status`). **Non joué :** les fixtures ne
+  contiennent aucune copie `damaged` — les 20 copies de `seed.sql` sont
+  `available`. Ce cas demande un `UPDATE copy SET status = 'damaged'` à la
+  main, sur une colonne que les triggers possèdent.
 
 ---
 
@@ -287,12 +292,11 @@ est attachée tant qu'aucune ne se libère.
 1. Choisir un livre et emprunter **toutes** ses copies (R-07 autant de fois que
    nécessaire).
 2. Réserver ce livre pour un autre élève.
-3. Vérifier la réservation sur `/borrowings` **[?] — confirmer qu'elle y figure.**
+3. Vérifier la réservation sur `/borrowings`
 4. Rendre une copie.
 
 **On observe :**
-- La réservation n'est proposée que lorsque **toutes** les copies sont sorties
-  **[?] — confirmer que le bouton est masqué ou désactivé sinon.**
+- La réservation n'est proposée que lorsque **toutes** les copies sont sorties.
 - La réservation créée est au statut `pending`, **sans copie attachée**.
 - Après le retour d'une copie, la plus ancienne réservation `pending` du livre
   passe `active`, une copie lui est attachée, et cette copie passe `on_hold`.
@@ -317,7 +321,7 @@ est attachée tant qu'aucune ne se libère.
 - Le navigateur demande l'accès à la caméra ; le flux vidéo s'affiche.
 - Un scan réussi ouvre la modale correspondant à l'état de la copie : **prêt**
   si `available`, **retour** si `borrowed`.
-- Refuser l'accès caméra affiche un message plutôt qu'un écran vide **[?]**.
+- Refuser l'accès caméra n'affiche aucun message et laisse l'écran vide.
 - Quitter `/scan` **libère la caméra** — la LED s'éteint. Une caméra qui reste
   allumée après navigation est une régression de `disconnectedCallback`.
 
@@ -363,12 +367,32 @@ la validation est refaite en JS sur `file.type` **et** sur l'extension.
 4. Tenter une recherche, puis une création.
 5. Redémarrer le backend et recharger.
 
-**On observe :**
-- Chaque vue affiche un **message d'erreur lisible** — pas une page blanche,
-  pas un spinner infini.
-- **[?] — noter le message exact de chaque vue. C'est le point le plus fragile
-  de la migration : les `catch (error)` deviennent `catch (error: unknown)` et
-  le message affiché change facilement sans qu'aucun type ne s'y oppose.**
+**On observe :** les trois vues ne se comportent **pas** de la même façon.
+
+- `/catalog` affiche :
+
+  > Error loading books: Failed to fetch books: TypeError: Failed to fetch.
+
+- `/borrowings` affiche :
+
+  > Error loading borroweds: Failed to fetch.
+
+  > ⚠️ « borroweds » est une **faute de frappe présente dans le code
+  > d'aujourd'hui**. Elle fait partie de la référence : la reproduire telle
+  > quelle après conversion. La corriger est un changement de comportement —
+  > légitime, mais **pas pendant une story de conversion**, où le diff doit
+  > rester une pure ré-annotation.
+
+- `/add` **n'affiche aucun message.** L'échec est silencieux. C'est le
+  comportement actuel, donc la référence ; ce n'est pas une régression tant
+  qu'on le retrouve à l'identique. C'est en revanche le meilleur candidat à une
+  story de correction, **après** la migration.
+
+Ces trois messages sont le point le plus fragile de la migration : les
+`catch (error)` deviennent `catch (error: unknown)` et le texte affiché change
+facilement sans qu'aucun type ne s'y oppose. **Les reproduire au caractère
+près** après la conversion d'`api/book`, `api/borrowing` et `api/bookService`.
+
 - La console ne part pas en boucle de requêtes.
 - Après redémarrage, un rechargement suffit à retrouver un état normal.
 
@@ -392,9 +416,43 @@ recette de cette story**.
 **On observe :**
 - L'onglet B reçoit un **409** et affiche un message spécifique au conflit,
   distinct d'une erreur générique.
-- **[?] — noter le message exact, et si la liste se rafraîchit d'elle-même.**
+- Message exact, reprenant le titre du livre :
+
+  > Astrophysics for People in a Hurry is no longer available.
+  > Someone else borrowed this copy a moment ago.
+
+- **La liste de l'onglet B ne se rafraîchit pas d'elle-même.** Elle ne se met à
+  jour qu'*après* la tentative d'emprunt qui a échoué. C'est le comportement
+  actuel, et donc la référence : ni un bug à corriger pendant la migration, ni
+  une régression si on le retrouve à l'identique.
 - L'état final en base est cohérent : **un seul** prêt créé, pas deux.
-- Le même scénario sur le retour donne « déjà rendue », pas une erreur 500.
+
+### Le même conflit, côté retour
+
+Le retour se comporte **différemment de l'emprunt** — c'est l'asymétrie à
+préserver.
+
+- Onglet A, le retour aboutit et une confirmation s'affiche :
+
+  > Astrophysics for People in a Hurry has been returned.
+  > The copy is back on the shelf and can be borrowed again.
+
+  **La liste se rafraîchit toute seule** et le prêt disparaît de
+  `/borrowings` — là où l'emprunt, lui, ne rafraîchit rien.
+
+- Onglet B, la modale de confirmation s'ouvre **normalement** : elle demande
+  toujours si l'on veut rendre le livre X emprunté par Y. Le front ne sait pas
+  encore que la copie est rendue.
+
+- En confirmant, une **seconde modale** annonce le conflit :
+
+  > Astrophysics for People in a Hurry is not out on loan.
+  > Somebody has returned it already, so there is nothing to check in.
+
+C'est bien un 409 traité, pas une 500. **Les deux modales font partie de la
+référence** : une conversion qui n'en afficherait qu'une — en fermant la
+première ou en escamotant la seconde — serait une régression, même si le
+message final est identique.
 
 > Les trois cas de `returnBorrowing` — 409, erreur sans message, succès — sont
 > couverts par `test/api/borrowing.spec.ts`. Ce parcours vérifie ce que le test
@@ -409,3 +467,18 @@ recette de cette story**.
 - Les vues **placeholder** (`home`, `analytics`, `settings`, `account`)
   au-delà de leur rendu et du menu.
 - `npm run analyze` et `custom-elements.json`.
+- **Le cas de la copie `damaged`** de [R-07](#r-07--prêt-puis-retour) : les
+  20 copies de `seed.sql` sont `available`, et `copy.status` appartient aux
+  triggers. L'atteindre demande un `UPDATE copy SET status = 'damaged'` à la
+  main, sur une colonne que le code applicatif n'écrit jamais.
+
+### Deux comportements relevés, à ne pas corriger en migrant
+
+Ils sont dans la référence parce qu'ils existent aujourd'hui, pas parce qu'ils
+sont souhaitables. Les corriger est légitime — **dans une story à part, après
+la migration**, jamais dans un diff de conversion.
+
+| Où | Quoi |
+|---|---|
+| [R-11](#r-11--backend-arrêté) | `/add` échoue **en silence**, sans message |
+| [R-11](#r-11--backend-arrêté) | `/borrowings` affiche « Error loading **borroweds** » — faute de frappe dans le code |
