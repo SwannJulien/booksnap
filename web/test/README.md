@@ -16,13 +16,13 @@ pas de Chromium. C'est délibéré (`.claude/CLAUDE.md`).
 | Fichier | Ce qu'il tient |
 |---|---|
 | `components.smoke.spec.ts` | Chaque composant est importé et monté une fois. **C'est le filet de la migration.** |
-| `lit-class-fields.spec.ts` | Le motif `declare` de TS-011, démontré dans les deux sens |
+| `lit-class-fields.spec.ts` | Le motif `declare` de TS-012, démontré dans les deux sens |
 | `components/search-bar-bks.spec.ts` | Le composant partagé le plus exposé, en détail |
-| `api/borrowing.spec.ts` | La convention `error.status`, épinglée avant que TS-005 la remplace |
+| `api/borrowing.spec.ts` | La convention `error.status`, épinglée avant que TS-006 la remplace |
 
 ### Pourquoi monter suffit
 
-Le bug que TS-011 signale — un champ de classe qui masque l'accesseur réactif
+Le bug que TS-012 signale — un champ de classe qui masque l'accesseur réactif
 de Lit — ne produit **aucune erreur de compilation**. Le composant s'affiche et
 cesse simplement de se mettre à jour.
 
@@ -61,7 +61,7 @@ est correct.**
   et `getUserMedia` ne sont pas exercés.
 - **Pas de vrai téléversement de fichier**, ni de rendu d'image de couverture.
 - **`booksnap-app` est hors du périmètre** : son routeur Vaadin s'installe dans
-  `firstUpdated` sur un `<main>` réel. C'est le sujet de TS-014.
+  `firstUpdated` sur un `<main>` réel. C'est le sujet de TS-015.
 
 **La recette manuelle de TS-001 reste nécessaire.** Cette suite ne la remplace
 pas : elle prend la classe de bug que la recette attrape le plus mal et la rend
