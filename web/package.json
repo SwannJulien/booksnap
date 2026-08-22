@@ -10,6 +10,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint --ext .js,.html . --ignore-path .gitignore; prettier \"**/*.js\" --check --ignore-path .gitignore",
     "format": "eslint --ext .js,.html . --fix --ignore-path .gitignore && prettier \"**/*.js\" --write --ignore-path .gitignore",
     "prepare": "husky",
@@ -28,10 +31,13 @@
     "esbuild": "^0.28.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
+    "happy-dom": "^20.11.6",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
     "prettier": "3.6.2",
-    "vite": "^8.1.5"
+    "typescript": "^5.9.3",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.11"
   },
   "eslintConfig": {
     "extends": [
