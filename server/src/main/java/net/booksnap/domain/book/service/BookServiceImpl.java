@@ -207,7 +207,7 @@ public class BookServiceImpl implements BookService {
         book.setIsbn13(request.isbn13());
         book.setPublisher(request.publisher());
         book.setPublishingYear(request.publishingYear() != null ? Short.valueOf(request.publishingYear()) : null);
-        book.setNumberOfPages((short) request.numberOfPages());
+        book.setNumberOfPages(request.numberOfPages() != null ? request.numberOfPages().shortValue() :  null);
         book.setYearRecommendation(request.yearRecommendation());
         book.setIsFiction(request.isFiction());
 

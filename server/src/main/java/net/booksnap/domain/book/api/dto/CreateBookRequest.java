@@ -21,7 +21,7 @@ public record CreateBookRequest (
 
     String publisher,
 
-    int numberOfPages,
+    Integer numberOfPages,
 
     KeyStage yearRecommendation,
 
