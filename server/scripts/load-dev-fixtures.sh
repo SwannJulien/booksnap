@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
 #
-# Charge les données de développement (seed.sql puis covers.sql) dans une base
-# dont le schéma existe déjà.
+# Loads the development data (seed.sql then covers.sql) into a database whose
+# schema already exists.
 #
-# À utiliser après un `docker compose down -v` : le volume recréé donne une base
-# vide, le schéma est ensuite construit par Flyway au démarrage du backend, et
-# c'est seulement là que ces fixtures peuvent être chargées.
+# Use after a `docker compose down -v`: the recreated volume gives an empty
+# database, the schema is then built by Flyway when the backend starts, and only
+# at that point can these fixtures be loaded.
 #
 #   docker compose up -d db
-#   # démarrer le backend depuis l'IDE  -> Flyway joue V1..Vn
+#   # start the backend from the IDE  -> Flyway applies V1..Vn
 #   server/scripts/load-dev-fixtures.sh
 #
-# Ces fichiers sont délibérément hors des migrations : ce sont des données de
-# développement, elles n'ont rien à faire dans une base de production.
+# These files are deliberately kept out of the migrations: they are development
+# data, and have no business in a production database.
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/_lib.sh"
 
 usage() {
     cat <<'EOF'
-Usage: load-dev-fixtures.sh [--database NOM] [--yes]
+Usage: load-dev-fixtures.sh [--database NAME] [--yes]
 
-  --database NOM  Base cible (défaut : $POSTGRES_DB du conteneur).
-  --yes, -y       Ne pas demander confirmation si la base contient déjà des données.
+  --database NAME  Target database (default: the container's $POSTGRES_DB).
+  --yes, -y        Do not ask for confirmation if the database already has data.
 EOF
 }
 
@@ -30,23 +30,23 @@ require_container
 require_schema
 
 dewey="$(db_scalar "SELECT count(*) FROM dewey_category")"
-[ "$dewey" -gt 0 ] || die "la table dewey_category est vide dans $TARGET_DB.
-  Les livres de seed.sql référencent des codes Dewey ; l'insertion échouerait.
-  Flyway ne la repeuplera pas : V2 est déjà enregistrée comme appliquée.
-  Utiliser reset-dev-db.sh, qui recharge Dewey avant les fixtures."
+[ "$dewey" -gt 0 ] || die "table dewey_category is empty in $TARGET_DB.
+  The books in seed.sql reference Dewey codes; the insert would fail.
+  Flyway will not repopulate it: V2 is already recorded as applied.
+  Use reset-dev-db.sh, which reloads Dewey before the fixtures."
 
 books="$(db_scalar "SELECT count(*) FROM book")"
 if [ "$books" -gt 0 ]; then
-    confirm "La base contient déjà $books livre(s). seed.sql va échouer sur les
-   contraintes d'unicité (author_name_key, genre_name_key, cover_pkey…).
-   Pour repartir propre, utiliser plutôt reset-dev-db.sh."
+    confirm "The database already holds $books book(s). seed.sql will fail on the
+   unique constraints (author_name_key, genre_name_key, cover_pkey…).
+   To start clean, use reset-dev-db.sh instead."
 fi
 
-info "chargement de seed.sql"
+info "loading seed.sql"
 db_run_file "$SQL_DIR/seed.sql"
 ok "seed.sql"
 
-info "chargement de covers.sql"
+info "loading covers.sql"
 db_run_file "$SQL_DIR/covers.sql"
 ok "covers.sql"
 
