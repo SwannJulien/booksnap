@@ -168,6 +168,7 @@ export const booksnapApp = [
         bottom: 0;
         display: flex;
         justify-content: center;
+        z-index: 100;
 
         > ul {
           margin: 0;
@@ -176,7 +177,6 @@ export const booksnapApp = [
           grid-auto-columns: 60px;
           grid-auto-flow: column;
           align-items: center;
-          overflow-x: scroll;
           overflow-y: hidden;
         }
 
