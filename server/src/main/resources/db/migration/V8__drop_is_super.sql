@@ -1,0 +1,40 @@
+-- =============================================================================
+-- V8 — Drop users.is_super
+-- =============================================================================
+-- US-004, second half. V7 added `users.role`, which is what expresses privilege
+-- from now on; this migration removes the column it replaces.
+--
+-- The split into two migrations is deliberate. V7 is additive and harmless —
+-- it can be deployed, observed, rolled forward. This one destroys data and
+-- cannot be undone: re-adding the column would not bring the values back.
+-- Keeping them apart means production can sit on V7 alone for as long as needed.
+--
+-- What is actually lost: nothing that anything reads. `is_super` was never read
+-- by a single line of code, back or front — only written by seed.sql. It is
+-- dropped, not migrated, because V7 already carries the concept forward.
+--
+-- ⚠️ The pre-drop check was run against the DEVELOPMENT database:
+--
+--   SELECT id, first_name, last_name, email, is_super FROM users WHERE is_super IS TRUE;
+--
+-- It returned no rows, so no account's privilege is being erased here. RUN IT
+-- AGAIN before deploying this migration anywhere else. V7 promotes nobody, so a
+-- `is_super = true` account on another environment silently lands on the `user`
+-- role, and this migration then erases the only trace that it was ever
+-- privileged. If the query returns rows, promote those accounts to `admin` by
+-- email first — in a new V<n>, since V7 is already applied and checksummed —
+-- and only then let this one run.
+--
+-- No CASCADE: nothing depends on the column. V1 declares it as a bare
+-- `is_super boolean`, with no index, constraint, view or trigger referencing it.
+--
+-- The Java side goes in the same commit, and has to: `User.isSuper` is removed,
+-- and `is_super` is out of the INSERT column list in seed.sql. Flyway runs
+-- before Hibernate's schema validation on the same startup, so an entity field
+-- left behind here would fail `ddl-auto=validate` on a column that no longer
+-- exists, and the fixtures would fail on an unknown column.
+--
+-- NEVER MODIFY THIS FILE — Flyway checksum. Any correction is a new V<n>.
+-- =============================================================================
+
+ALTER TABLE users DROP COLUMN is_super;

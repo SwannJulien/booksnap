@@ -4,18 +4,17 @@ ON CONFLICT (name) DO NOTHING;
 
 -- Insert Users
 -- Students belong to a house (named after famous Spanish painters), independently of their key stage.
--- Staff / super users have no house, key stage or parent email.
-INSERT INTO users (first_name, last_name, is_super, email, genre, parent_email, key_stage, house) VALUES
-('Alice',   'Martin',    false, 'alice.martin@example.com',    'female', 'parent.martin@example.com',   'ks_2',       'Goya'),
-('Bob',     'Johnson',   false, 'bob.johnson@example.com',     'male',   'parent.johnson@example.com',  'ks_3',       'Velazquez'),
-('Clara',   'Dupont',    false, 'clara.dupont@example.com',    'female', 'parent.dupont@example.com',   'ks_1',       'Picasso'),
-('Daniel',  'Smith',     false, 'daniel.smith@example.com',    'male',   'parent.smith@example.com',    'ks_4',       'Dali'),
-('Emma',    'Wilson',    false, 'emma.wilson@example.com',     'female', 'parent.wilson@example.com',   'pre_school', 'Goya'),
-('Frank',   'Brown',     false, 'frank.brown@example.com',     'male',   'parent.brown@example.com',    'ks_2',       'Velazquez'),
-('Grace',   'Taylor',    false, 'grace.taylor@example.com',    'female', 'parent.taylor@example.com',   'ks_5',       'Picasso'),
-('Henry',   'Anderson',  false, 'henry.anderson@example.com',  'male',   'parent.anderson@example.com', 'ks_3',       'Dali'),
-('Isla',    'Thomas',    false, 'isla.thomas@example.com',     'female', 'parent.thomas@example.com',   'ks_1',       'Goya'),
-('James',   'White',     true,  'james.white@example.com',     'male',   NULL,                          NULL,         NULL)
+-- Staff have no house, key stage or parent email.
+INSERT INTO users (first_name, last_name, email, genre, parent_email, key_stage, house) VALUES
+('Alice',   'Martin',    'alice.martin@example.com',    'female', 'parent.martin@example.com',   'ks_2',       'Goya'),
+('Bob',     'Johnson',   'bob.johnson@example.com',     'male',   'parent.johnson@example.com',  'ks_3',       'Velazquez'),
+('Clara',   'Dupont',    'clara.dupont@example.com',    'female', 'parent.dupont@example.com',   'ks_1',       'Picasso'),
+('Daniel',  'Smith',     'daniel.smith@example.com',    'male',   'parent.smith@example.com',    'ks_4',       'Dali'),
+('Emma',    'Wilson',    'emma.wilson@example.com',     'female', 'parent.wilson@example.com',   'pre_school', 'Goya'),
+('Frank',   'Brown',     'frank.brown@example.com',     'male',   'parent.brown@example.com',    'ks_2',       'Velazquez'),
+('Grace',   'Taylor',    'grace.taylor@example.com',    'female', 'parent.taylor@example.com',   'ks_5',       'Picasso'),
+('Henry',   'Anderson',  'henry.anderson@example.com',  'male',   'parent.anderson@example.com', 'ks_3',       'Dali'),
+('Isla',    'Thomas',    'isla.thomas@example.com',     'female', 'parent.thomas@example.com',   'ks_1',       'Goya')
 ON CONFLICT (email) DO NOTHING;
 
 -------------------------------------------------------------------------------------------------------

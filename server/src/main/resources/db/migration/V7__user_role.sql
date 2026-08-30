@@ -1,0 +1,52 @@
+-- =============================================================================
+-- V7 — users.role: the account's role becomes explicit data
+-- =============================================================================
+-- US-004. Until now `users` carried an `is_super BOOLEAN` that no code ever read
+-- — back or front — and that only seed.sql populated. A boolean cannot express
+-- three roles anyway, and every authorisation decision from here on is founded
+-- on this column. See REGLES-METIER-ACCES.md §1.
+--
+-- `is_super` is deliberately NOT dropped here. Adding the role and destroying
+-- the old column are two operations of very different risk: this one can be
+-- rolled out in production and observed before anything irreversible happens.
+-- The drop is a separate, later migration, together with the field on the `User`
+-- entity and the column in seed.sql.
+--
+-- Before writing this migration the live database was checked for accounts to
+-- promote:
+--
+--   SELECT id, first_name, last_name, email, is_super FROM users WHERE is_super IS TRUE;
+--
+-- It returned no rows, so every account legitimately lands on `user` and there
+-- is nothing to promote. Had there been any, they would be set to `admin` right
+-- here, explicitly, by email — never by id, which is not stable across
+-- environments.
+--
+-- Scope of the role in phase 1: a `librarian` has their rights on ALL libraries.
+-- Restricting them to their own libraries is phase 2, and is a separate concept
+-- from the role — the role alone will not be enough. This is assumed and without
+-- consequence as long as a single library is actually in use (the front hardcodes
+-- `libraryId: 1`).
+--
+-- No endpoint exposes or modifies the role at this stage; role management is
+-- phase 4. `UserSearchResponse` in particular stays as it is: it feeds the
+-- front-desk borrower search, where the role has no place.
+--
+-- NEVER MODIFY THIS FILE — Flyway checksum. Any correction is a new V<n>.
+-- =============================================================================
+
+CREATE TYPE user_role AS ENUM ('user', 'librarian', 'admin');
+
+-- DEFAULT 'user' is deliberate: an account whose role was not spelled out must
+-- land on the LEAST privileged role, never the other way round. It is also what
+-- makes the column NOT NULL possible on existing rows in a single statement.
+--
+-- The enum is what rejects anything outside the three roles — an application bug
+-- writing 'SUPERVISOR' fails at insert time rather than creating a silent
+-- fourth role. The Java enum mirrors these three values case for case, mapped
+-- with `@JdbcType(PostgreSQLEnumJdbcType.class)` as `Copy.status` already is on
+-- `copy_status`.
+--
+-- `role` is not a reserved word for a column name in PostgreSQL, but it is in
+-- other engines: stay wary if a native query ever manipulates it unquoted.
+ALTER TABLE users ADD COLUMN role user_role NOT NULL DEFAULT 'user';

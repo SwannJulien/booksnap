@@ -24,10 +24,10 @@ public class AuthIdentity extends Auditable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "provider")
-    @JdbcType(PostgreSQLEnumJdbcType.class)
     @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     private Provider provider;
 
     @Column(name = "subject")

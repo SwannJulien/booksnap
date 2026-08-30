@@ -45,8 +45,8 @@ public class Book extends Auditable {
     @Column(name = "number_of_pages")
     private Short numberOfPages;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "year_recommendation")
+    @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
     private KeyStage yearRecommendation;
 

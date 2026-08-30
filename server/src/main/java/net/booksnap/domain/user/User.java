@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import net.booksnap.domain.Auditable;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.LocalDateTime;
 
@@ -26,9 +28,6 @@ public class User extends Auditable {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "is_super")
-    private Boolean isSuper;
-
     @Column(name = "email", nullable = false, unique = true, columnDefinition = "email")
     @Email
     @NotNull
@@ -39,5 +38,11 @@ public class User extends Auditable {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
+
+    @Column(name = "role", nullable = false)
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    private Role role = Role.user;
 
 }

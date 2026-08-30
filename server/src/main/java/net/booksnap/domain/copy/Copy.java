@@ -39,10 +39,10 @@ public class Copy extends Auditable {
     @JoinColumn(name = "library_id", nullable = false)
     private Library library;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    @JdbcType(PostgreSQLEnumJdbcType.class)
     @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     private Status status = Status.available;
 
 }

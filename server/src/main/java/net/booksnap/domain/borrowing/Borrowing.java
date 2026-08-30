@@ -31,10 +31,10 @@ public class Borrowing extends Auditable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    @JdbcType(PostgreSQLEnumJdbcType.class)
     @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     private Status status = Status.borrowed;
 
     @Column(name = "start_date", nullable = false)
