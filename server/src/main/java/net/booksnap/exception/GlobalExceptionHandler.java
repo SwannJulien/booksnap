@@ -1,6 +1,7 @@
 package net.booksnap.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import net.booksnap.exception.book.BookAlreadyExistsException;
 import net.booksnap.exception.book.BookNotFoundException;
 import net.booksnap.exception.borrowing.BorrowingAlreadyReturnedException;
@@ -17,12 +18,14 @@ import net.booksnap.exception.user.UserNotFoundException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -34,6 +37,24 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request.getRequestURI());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * Declared before the catch-all: without it, a failed login would leave the
+     * controller as a plain exception and come back as a 500 reading "Bad credentials".
+     * The message is fixed and never {@code ex.getMessage()} — unknown email, wrong
+     * password, disabled account and missing local identity must be indistinguishable
+     * from the outside. The cause is logged instead, since support has nothing else.
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        log.info("Authentication failed on {}: {}", request.getRequestURI(), ex.getMessage());
+        ApiError error = new ApiError(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Invalid email or password",
+                request.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)

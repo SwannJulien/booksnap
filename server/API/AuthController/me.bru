@@ -1,0 +1,24 @@
+meta {
+  name: me
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{vipa}}/api/v1/auth/me
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Returns the current user, or 401 with an ApiError body when no session is attached.
+
+  This is the only endpoint locked down by US-005; the business endpoints stay open
+  until US-009. Run it before login to see the 401, and again after logout to check
+  the session really died server-side rather than just losing its cookie.
+}

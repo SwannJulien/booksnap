@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     @Query("""
@@ -16,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
                 OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')))
             """)
     List<User> searchActiveUsers(@Param("query") String query);
+    Optional<User> findByEmail(String email);
+
 }
