@@ -1,0 +1,23 @@
+script:post-response {
+  // Keeps {{csrfToken}} in step with the XSRF-TOKEN cookie.
+  //
+  // Bruno stores and replays the cookie on its own, but never copies it into a header,
+  // and a header is the only place the server looks for it on a write. So every response
+  // that carries a new token updates the variable that the POST / PUT / PATCH / DELETE
+  // requests reference.
+  //
+  // It has to run on every response, not once: signing in and signing out both replace
+  // the token, and a capture taken before the login would be dead right after it.
+  const setCookie = res.getHeader('set-cookie');
+  const cookies = Array.isArray(setCookie) ? setCookie : [setCookie].filter(Boolean);
+
+  const token = cookies
+    .map((cookie) => /(?:^|;\s*)XSRF-TOKEN=([^;]*)/.exec(cookie))
+    .filter(Boolean)
+    .map((match) => decodeURIComponent(match[1]))
+    .filter((value) => value.length > 0)[0];
+
+  if (token) {
+    bru.setVar('csrfToken', token);
+  }
+}

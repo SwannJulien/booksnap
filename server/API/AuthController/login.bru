@@ -1,7 +1,7 @@
 meta {
   name: login
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
@@ -11,6 +11,7 @@ post {
 }
 
 headers {
+  X-XSRF-TOKEN: {{csrfToken}}
   Content-Type: application/json
 }
 
@@ -27,6 +28,12 @@ settings {
 }
 
 docs {
+  Run `csrf` before this one. Since US-006 the login is a write like any other and is
+  refused with 403 without a token — which is the point: it means nobody can be signed
+  in from another site either. Signing in then swaps the token for a fresh one; the
+  collection-level post-response script picks the new one up, so the sequence keeps
+  working without a second trip to `csrf`.
+
   Answers 200 with the signed-in user (id, first name, last name, email, role) and
   sets the JSESSIONID cookie. Bruno keeps that cookie, so login -> me -> logout -> me
   runs as a sequence.

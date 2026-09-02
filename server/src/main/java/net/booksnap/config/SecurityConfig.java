@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
@@ -23,6 +24,10 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 @Configuration
@@ -30,17 +35,28 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           AuthenticationEntryPoint authenticationEntryPoint) throws Exception {
+                                           AuthenticationEntryPoint authenticationEntryPoint,
+                                           AccessDeniedHandler accessDeniedHandler,
+                                           CsrfTokenRepository csrfTokenRepository,
+                                           CsrfTokenRequestHandler csrfTokenRequestHandler) throws Exception {
         http
             .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
+            // Enabled since US-006. Authentication is carried by a cookie the browser
+            // attaches on its own, including on a request another site triggered, so a
+            // write has to prove it was issued by our own pages. Spring Security exempts
+            // GET, HEAD, OPTIONS and TRACE by itself — reads stay untouched.
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(csrfTokenRepository)
+                    .csrfTokenRequestHandler(csrfTokenRequestHandler)
+            )
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/v1/auth/login", "/api/v1/auth/logout").permitAll()
+                    .requestMatchers("/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/auth/logout").permitAll()
                     .requestMatchers("/api/v1/auth/me").authenticated()
                     .anyRequest().permitAll()
             )
             .exceptionHandling(exception -> exception
                     .authenticationEntryPoint(authenticationEntryPoint)
+                    .accessDeniedHandler(accessDeniedHandler)
             )
             .logout(logout -> logout
                     .logoutUrl("/api/v1/auth/logout")
@@ -49,6 +65,29 @@ public class SecurityConfig {
                     .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
             );
         return http.build();
+    }
+
+    /**
+     * The token lives in a cookie the script is allowed to read, not in the session.
+     *
+     * <p>That is the deliberate opposite of {@code JSESSIONID}, which stays {@code HttpOnly}:
+     * the front end must be able to copy the CSRF token into a request header, and the
+     * whole protection rests on a foreign site being unable to read our cookies. Making
+     * the session cookie readable would hand it to any injected script; making the CSRF
+     * cookie unreadable would leave the front end nothing to send.
+     *
+     * <p>Storing it in a cookie rather than the session also means a token can be handed
+     * out before anyone has signed in — which is what lets the login form itself be
+     * protected.
+     */
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
+    }
+
+    @Bean
+    public CsrfTokenRequestHandler csrfTokenRequestHandler() {
+        return new SpaCsrfTokenRequestHandler();
     }
 
     @Bean
@@ -73,11 +112,23 @@ public class SecurityConfig {
 
     // Order matters: the session id is rotated first, so the registry records the
     // rotated one rather than the id the client arrived with.
+    //
+    // The CSRF step comes last and is not decoration: it throws away the token the
+    // visitor held before signing in and issues a new one. Whoever managed to plant a
+    // known token in the browser before the login therefore holds a dead value after it.
+    // Spring wires this strategy in on its own when the login goes through one of its
+    // filters; AuthController authenticates by hand, so it has to be listed here.
     @Bean
-    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry) {
+    public SessionAuthenticationStrategy sessionAuthenticationStrategy(SessionRegistry sessionRegistry,
+                                                                      CsrfTokenRepository csrfTokenRepository,
+                                                                      CsrfTokenRequestHandler csrfTokenRequestHandler) {
+        CsrfAuthenticationStrategy csrfAuthenticationStrategy = new CsrfAuthenticationStrategy(csrfTokenRepository);
+        csrfAuthenticationStrategy.setRequestHandler(csrfTokenRequestHandler);
+
         return new CompositeSessionAuthenticationStrategy(List.of(
                 new ChangeSessionIdAuthenticationStrategy(),
-                new RegisterSessionAuthenticationStrategy(sessionRegistry)
+                new RegisterSessionAuthenticationStrategy(sessionRegistry),
+                csrfAuthenticationStrategy
         ));
     }
 

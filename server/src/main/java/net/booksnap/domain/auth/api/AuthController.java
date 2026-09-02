@@ -8,6 +8,7 @@ import net.booksnap.domain.auth.api.dto.AuthenticatedUserResponse;
 import net.booksnap.domain.auth.api.dto.LoginRequest;
 import net.booksnap.domain.auth.service.AuthenticatedUser;
 import net.booksnap.domain.user.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -70,6 +72,25 @@ public class AuthController {
         log.info("User {} signed in", authenticatedUser.getId());
 
         return toResponse(authenticatedUser);
+    }
+
+    /**
+     * Hands out a CSRF token, as the {@code XSRF-TOKEN} cookie set on this response.
+     *
+     * <p>Any read would do — the cookie rides on every response — but a client needs one
+     * request it can make before knowing anything, and having it named makes the
+     * dependency explicit instead of accidental. The front end calls it before its first
+     * write, the login included: a browser arriving on a page for the first time holds no
+     * token, and a login {@code POST} without one is refused like any other write.
+     *
+     * <p>No session is required, which is the point: the token lives in a cookie, not in
+     * the session, so it can be issued to a visitor who has not signed in.
+     */
+    @GetMapping("/csrf")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void csrf() {
+        // The body is empty on purpose: the token travels as a cookie, and returning it
+        // here as well would only invite someone to read it from the wrong place.
     }
 
     @GetMapping("/me")

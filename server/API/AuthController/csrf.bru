@@ -1,0 +1,42 @@
+meta {
+  name: csrf
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{vipa}}/api/v1/auth/csrf
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
+
+docs {
+  Run this first, once per Bruno session. It answers 204 and sets the XSRF-TOKEN
+  cookie; the collection-level post-response script (server/API/collection.bru) copies
+  the value into {{csrfToken}}, which every POST / PUT / PATCH / DELETE in this
+  collection sends as the X-XSRF-TOKEN header.
+
+  Since US-006 the server refuses any write arriving without a matching token, whether
+  or not anyone is signed in — the check sits in front of the filter chain, not behind
+  authentication. A write without the header answers:
+
+    403 { "message": "CSRF token missing or invalid" }
+
+  There is nothing special about this endpoint: every response carries the cookie, so
+  any read would prime the variable just as well. It exists so there is one request
+  that can be made before knowing anything, and it needs no session — the token lives
+  in a cookie, not in the session, which is what lets the login request itself be
+  protected.
+
+  Order for a full run: csrf -> login -> whatever -> logout.
+  Logging in and logging out both replace the token; the collection script follows
+  along, so this only has to be run again after clearing the cookies.
+
+  If a write answers 403 while {{csrfToken}} looks set, the usual cause is a cookie jar
+  out of step with the variable: clear the collection cookies and re-run this request.
+}
