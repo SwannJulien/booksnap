@@ -29,6 +29,7 @@ import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.session.SessionInformationExpiredStrategy;
 
 @Configuration
 public class SecurityConfig {
@@ -38,7 +39,9 @@ public class SecurityConfig {
                                            AuthenticationEntryPoint authenticationEntryPoint,
                                            AccessDeniedHandler accessDeniedHandler,
                                            CsrfTokenRepository csrfTokenRepository,
-                                           CsrfTokenRequestHandler csrfTokenRequestHandler) throws Exception {
+                                           CsrfTokenRequestHandler csrfTokenRequestHandler,
+                                           SessionRegistry sessionRegistry,
+                                           SessionInformationExpiredStrategy sessionInformationExpiredStrategy) throws Exception {
         http
             .cors(Customizer.withDefaults())
             // Enabled since US-006. Authentication is carried by a cookie the browser
@@ -51,8 +54,19 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/v1/auth/csrf", "/api/v1/auth/login", "/api/v1/auth/logout").permitAll()
-                    .requestMatchers("/api/v1/auth/me").authenticated()
+                    .requestMatchers("/api/v1/auth/me", "/api/v1/auth/password").authenticated()
                     .anyRequest().permitAll()
+            )
+            // Not a limit on how many times someone may sign in — maximumSessions(-1) is
+            // unlimited, and capping the librarians' browsers is nobody's requirement.
+            // Declaring concurrency control is what puts ConcurrentSessionFilter in the
+            // chain, and that filter is the only thing that acts on a session marked
+            // expired by SessionInvalidator. Without this block, changing a password marks
+            // the other sessions and they keep working regardless.
+            .sessionManagement(session -> session
+                    .maximumSessions(-1)
+                    .sessionRegistry(sessionRegistry)
+                    .expiredSessionStrategy(sessionInformationExpiredStrategy)
             )
             .exceptionHandling(exception -> exception
                     .authenticationEntryPoint(authenticationEntryPoint)

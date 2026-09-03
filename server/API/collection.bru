@@ -1,3 +1,24 @@
+script:pre-request {
+  // Stops a write that is certain to answer 403, and says why.
+  //
+  // The server cannot distinguish the causes for us: a missing cookie, a stale token and
+  // an unresolved {{csrfToken}} all come back as the same "CSRF token missing or
+  // invalid". The one cause detectable from here is the variable never having been set,
+  // which is also the one that does not fix itself — re-running `csrf` is a no-op while
+  // the cookie jar already holds a token (see AuthController/csrf.bru).
+  //
+  // Same method list Spring Security exempts, and for the same reason: reads need no
+  // token, and guarding them would make `csrf` itself unrunnable.
+  const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'TRACE'];
+
+  if (!SAFE_METHODS.includes(req.getMethod().toUpperCase()) && !bru.getVar('csrfToken')) {
+    throw new Error(
+      'csrfToken is empty — this write would answer 403. Clear this collection\'s ' +
+      'cookies, then run `csrf`. Re-running `csrf` alone will not help.',
+    );
+  }
+}
+
 script:post-response {
   // Keeps {{csrfToken}} in step with the XSRF-TOKEN cookie.
   //

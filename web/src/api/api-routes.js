@@ -21,5 +21,6 @@ export const API_ROUTES = {
   DEWEY: '/api/v1/dewey',
   GENRES: '/api/v1/genres',
   HOLDS: '/api/v1/holds',
+  PASSWORD: '/api/v1/auth/password',
   USERS: '/api/v1/users',
 };

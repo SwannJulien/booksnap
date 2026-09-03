@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.booksnap.domain.auth.AuthIdentity;
 import net.booksnap.domain.auth.Provider;
 import net.booksnap.domain.auth.repository.AuthIdentityRepository;
+import net.booksnap.domain.auth.service.PasswordPolicy;
 import net.booksnap.domain.user.Role;
 import net.booksnap.domain.user.User;
 import net.booksnap.domain.user.repository.UserRepository;
@@ -36,16 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class AdminBootstrapRunner implements ApplicationRunner {
 
-    /**
-     * An administrator of a library reachable from the school network is the one account
-     * where a memorable password is not a fair trade. Twelve characters is the floor, and
-     * missing it stops the application rather than producing a weak admin.
-     */
-    private static final int MINIMUM_PASSWORD_LENGTH = 12;
-
     private final UserRepository userRepository;
     private final AuthIdentityRepository authIdentityRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicy passwordPolicy;
 
     private final String email;
     private final String password;
@@ -55,6 +50,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
     public AdminBootstrapRunner(UserRepository userRepository,
                                 AuthIdentityRepository authIdentityRepository,
                                 PasswordEncoder passwordEncoder,
+                                PasswordPolicy passwordPolicy,
                                 @Value("${booksnap.bootstrap.admin.email:}") String email,
                                 @Value("${booksnap.bootstrap.admin.password:}") String password,
                                 @Value("${booksnap.bootstrap.admin.first-name:}") String firstName,
@@ -62,6 +58,7 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         this.userRepository = userRepository;
         this.authIdentityRepository = authIdentityRepository;
         this.passwordEncoder = passwordEncoder;
+        this.passwordPolicy = passwordPolicy;
         this.email = email.trim();
         // Not trimmed: a space is a legitimate character, and silently dropping one would
         // hash something other than what the operator will type at the login form.
@@ -93,12 +90,16 @@ public class AdminBootstrapRunner implements ApplicationRunner {
         // Before any write, and loudly: the alternative is an application whose
         // administrator is guessable, which is worse than an application that will not
         // start. An unset password lands here too — zero is shorter than twelve.
-        if (password.length() < MINIMUM_PASSWORD_LENGTH) {
+        //
+        // The rule itself comes from PasswordPolicy, the same component the password
+        // change of US-008 uses. A copy of it here would eventually accept a bootstrap
+        // password that the change endpoint then refuses.
+        passwordPolicy.violation(password).ifPresent(rule -> {
             throw new IllegalStateException(
-                    "Admin bootstrap refused: BOOKSNAP_BOOTSTRAP_ADMIN_PASSWORD must be at least "
-                            + MINIMUM_PASSWORD_LENGTH + " characters, and is "
-                            + password.length() + ". Fix it or clear the bootstrap variables.");
-        }
+                    "Admin bootstrap refused: BOOKSNAP_BOOTSTRAP_ADMIN_PASSWORD does not "
+                            + "satisfy the password policy — " + rule
+                            + ". Fix it or clear the bootstrap variables.");
+        });
 
         // users.email is unique, and citext since V4 — a difference in case is the same
         // address, so this finds the account whatever case it was typed in and the

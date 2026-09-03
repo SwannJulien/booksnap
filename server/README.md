@@ -40,8 +40,12 @@ environment variables.
 
 3. Sign in with that email and password.
 
-4. **Change the password from the application**, then **empty the four variables** and
-   restart. Until you do, the password is sitting in a file on disk.
+4. **Change the password from the account page** (*My account* → *Change password*, or
+   `POST /api/v1/auth/password`), then **empty the four variables** and restart. Until you
+   do, the password is sitting in a file on disk — and is known to whoever set it up.
+
+   Changing it there also signs the account out of every other browser it was open in,
+   which is the point: the bootstrap password was never meant to be a personal one.
 
 ### What it will and will not do
 

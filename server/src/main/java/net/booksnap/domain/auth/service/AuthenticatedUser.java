@@ -48,4 +48,27 @@ public class AuthenticatedUser implements UserDetails, CredentialsContainer {
     @Override public void eraseCredentials() {
         this.passwordHash = null;
     }
+
+    /**
+     * Value equality on the account id, and it is load-bearing rather than tidy.
+     *
+     * <p>{@code SessionRegistry} keys its sessions by principal object, in a plain map.
+     * Every session holds its own instance of this class — one per login, plus one per
+     * deserialization — so identity equality would make "the sessions of this user" a
+     * lookup that only ever finds the caller's own. US-008 relies on that lookup to end
+     * the sessions of a user who has just changed their password; with the inherited
+     * equality it reports success and ends nothing.
+     *
+     * <p>The id and not the email: an address can be corrected, and a principal that stops
+     * matching the one registered at login strands its own sessions in the registry.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof AuthenticatedUser authenticatedUser && id.equals(authenticatedUser.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id.hashCode();
+    }
 }

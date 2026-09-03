@@ -2,11 +2,15 @@ package net.booksnap.domain.auth.api;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.booksnap.domain.auth.api.dto.AuthenticatedUserResponse;
+import net.booksnap.domain.auth.api.dto.ChangePasswordRequest;
 import net.booksnap.domain.auth.api.dto.LoginRequest;
 import net.booksnap.domain.auth.service.AuthenticatedUser;
+import net.booksnap.domain.auth.service.PasswordService;
+import net.booksnap.domain.auth.service.SessionInvalidator;
 import net.booksnap.domain.user.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,15 +41,21 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
     private final UserRepository userRepository;
+    private final PasswordService passwordService;
+    private final SessionInvalidator sessionInvalidator;
 
     public AuthController(AuthenticationManager authenticationManager,
                           SecurityContextRepository securityContextRepository,
                           SessionAuthenticationStrategy sessionAuthenticationStrategy,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          PasswordService passwordService,
+                          SessionInvalidator sessionInvalidator) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
         this.userRepository = userRepository;
+        this.passwordService = passwordService;
+        this.sessionInvalidator = sessionInvalidator;
     }
 
     @PostMapping("/login")
@@ -96,6 +106,40 @@ public class AuthController {
     @GetMapping("/me")
     public AuthenticatedUserResponse me(@AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         return toResponse(authenticatedUser);
+    }
+
+    /**
+     * Replaces the caller's own password, and only ever their own.
+     *
+     * <p>The account acted upon is {@code authenticatedUser}, taken from the session.
+     * {@link ChangePasswordRequest} deliberately has nowhere to put a user id: accepting
+     * one, even "for administrators", would make this the endpoint for changing anybody's
+     * password, and the check separating the two cases is the kind that gets removed by a
+     * later refactor that does not know why it was there.
+     *
+     * <p>A POST, never a GET, and the passwords travel in the body: a query string is
+     * written to the access log, kept in the browser's history and sent in the
+     * {@code Referer} of the next request.
+     *
+     * <p>The other sessions are ended after the write has been committed, not during it.
+     * Doing it inside the transaction would leave a user signed out of their other
+     * browsers by a change that then rolled back.
+     */
+    @PostMapping("/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@RequestBody @Valid ChangePasswordRequest changePasswordRequest,
+                               @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                               HttpServletRequest request) {
+        passwordService.changePassword(
+                authenticatedUser.getId(),
+                changePasswordRequest.currentPassword(),
+                changePasswordRequest.newPassword());
+
+        // getSession(false): this request has one — it was authenticated by it — and asking
+        // for a new one here would spare an id the registry never heard of, expiring the
+        // caller's own session along with the rest.
+        HttpSession session = request.getSession(false);
+        sessionInvalidator.invalidateAllExcept(authenticatedUser, session == null ? null : session.getId());
     }
 
     /**
