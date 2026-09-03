@@ -18,7 +18,11 @@ settings {
 docs {
   Returns the current user, or 401 with an ApiError body when no session is attached.
 
-  This is the only endpoint locked down by US-005; the business endpoints stay open
-  until US-009. Run it before login to see the 401, and again after logout to check
-  the session really died server-side rather than just losing its cookie.
+  It was the only endpoint locked down by US-005; since US-009 the business endpoints
+  answer 401 the same way. Run it before login to see the 401, and again after logout to
+  check the session really died server-side rather than just losing its cookie.
+
+  The role in the body is what the rest of the collection is read against: a 403 further
+  on means the role shown here is not in that endpoint's list, not that the request is
+  malformed.
 }

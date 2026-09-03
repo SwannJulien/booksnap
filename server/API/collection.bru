@@ -1,3 +1,35 @@
+docs {
+  # Every request here needs a session
+
+  Since US-009 the API answers 401 to anything sent without one, the four exceptions
+  being `csrf`, `login`, `logout` and the actuator health probe. Nothing in this
+  collection runs on its own any more; the opening move is always:
+
+    AuthController/csrf  ->  AuthController/login
+
+  Bruno keeps the JSESSIONID cookie from then on, so the rest of the collection follows
+  in whatever order you like. A folder that suddenly answers 401 everywhere means the
+  session has gone — an eight-hour idle timeout, a backend restart, or a `logout` —
+  rather than a broken request.
+
+  ## 403 is a different failure from 401
+
+  - **401** — no session, or it has expired. Sign in again.
+  - **403** — signed in, but this role may not do this. Either the endpoint is staff-only
+    and you are signed in as a student, or the write is missing its CSRF token (the body
+    says which).
+
+  Each controller folder documents the roles its endpoints accept. Use
+  `AuthController/login-other-role` to come back as a librarian or a student and check
+  the refusals rather than only the successes — a matrix is only verified from both
+  sides.
+
+  ## What is not enforced yet
+
+  Library scope. A librarian passes or fails on the URL alone, so this collection cannot
+  show a librarian refused on a copy belonging to another library — that is phase 2.
+}
+
 script:pre-request {
   // Stops a write that is certain to answer 403, and says why.
   //

@@ -72,3 +72,20 @@ environment variables.
 This is not `seed.sql`. Development fixtures are loaded separately with
 `scripts/load-dev-fixtures.sh`; this bootstrap is meant to run in production, against a
 database holding real people.
+
+## Emergency switch: `SECURITY_LOCKDOWN_ENABLED`
+
+Since US-009 every endpoint requires a session and the right role, the permission matrix
+living in one block in `SecurityConfig`. Setting `SECURITY_LOCKDOWN_ENABLED=false` throws
+that matrix away and makes the whole API public again — the user directory included — and
+logs a warning saying so at every startup.
+
+It exists for one situation: a release that locks the school out of its own library, where
+the alternative is rolling back everything. It is a way to keep the library open for an
+afternoon, not a setting; put it back to `true` the same day. The default is `true` and
+`application.properties` must stay that way — the switch is driven from the environment or
+not at all.
+
+If it is ever needed, the reason is worth writing down: the failures it covers (no sign-in
+screen deployed alongside the API, an administrator account nobody can use) are all
+preventable, and the switch existing should not be what makes them cheap.
